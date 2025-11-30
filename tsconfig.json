@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    // Çıktı ayarları
+    "outDir": "./dist",
+    "rootDir": "./src",
+
+    // Node.js + CommonJS modu
+    "target": "ES2020",
+    "module": "commonjs",
+    "moduleResolution": "node",
+
+    // Express'i `import express from "express";` şeklinde kullanabilmek için
+    "esModuleInterop": true,
+
+    // TypeScript kalite ayarları
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src"]
+}
