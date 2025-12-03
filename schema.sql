@@ -1,7 +1,0 @@
-CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    role TEXT NOT NULL DEFAULT 'participant',
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
