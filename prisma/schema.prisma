@@ -1,8 +1,8 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
 
 generator client {
   provider = "prisma-client-js"
@@ -20,4 +20,29 @@ model User {
   passwordHash String
   role      String   @default("participant")
   createdAt DateTime @default(now())
+}
+
+model Registration {
+  id           Int      @id @default(autoincrement())
+
+  salutation   String   
+  firstName    String   
+  lastName     String   
+
+  email        String 
+  confirmEmail String  
+
+  street       String   
+  addressExtra String?  
+  zipCode      String   
+  city         String   
+
+  school       String   
+  grade        String   
+
+  motivation   String?  
+  comments     String?  
+
+  createdAt    DateTime @default(now())
+  status       RegistrationStatus @default(PENDING)
 }
