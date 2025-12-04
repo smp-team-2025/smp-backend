@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-//import { authRouter } from "./modules/auth/auth.router";
+import { authRouter } from "./modules/auth/auth.router";
 import { registrationRouter } from "./modules/registration/registration.router";
 
 
@@ -20,7 +20,7 @@ app.get("/health", (_req, res) => {
 });
 
 //Auth endpoint for login
-//app.use("/api/auth", authRouter);
+app.use("/api/auth", authRouter);
 
 //Registration form
 app.use("/api/registrations", registrationRouter);
