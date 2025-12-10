@@ -2,6 +2,75 @@ import { Request, Response } from "express";
 import { registrationService } from "./registration.service";
 
 export const registrationController = {
+  // Issue #32: Get all registrations
+  async getAll(_req: Request, res: Response) {
+    try {
+      const registrations = await registrationService.getAllRegistrations();
+      return res.json(registrations);
+    } catch (err) {
+      console.error("Error getting registrations:", err);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  },
+
+  // Issue #33: Get registration by ID
+  async getById(req: Request, res: Response) {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID" });
+      }
+
+      const registration = await registrationService.getRegistrationById(id);
+      if (!registration) {
+        return res.status(404).json({ error: "Registration not found" });
+      }
+
+      return res.json(registration);
+    } catch (err) {
+      console.error("Error getting registration:", err);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  },
+
+  // Issue #34: Approve registration
+  async approve(req: Request, res: Response) {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID" });
+      }
+
+      const registration = await registrationService.approveRegistration(id);
+      return res.json(registration);
+    } catch (err: any) {
+      if (err.code === "P2025") {
+        return res.status(404).json({ error: "Registration not found" });
+      }
+      console.error("Error approving registration:", err);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  },
+
+  // Issue #35: Reject registration
+  async reject(req: Request, res: Response) {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID" });
+      }
+
+      const registration = await registrationService.rejectRegistration(id);
+      return res.json(registration);
+    } catch (err: any) {
+      if (err.code === "P2025") {
+        return res.status(404).json({ error: "Registration not found" });
+      }
+      console.error("Error rejecting registration:", err);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  },
+
   async create(req: Request, res: Response) {
     try {
       const {

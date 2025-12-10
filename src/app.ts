@@ -25,3 +25,6 @@ app.use("/api/auth", authRouter);
 //Registration form
 app.use("/api/registrations", registrationRouter);
 
+// Frontend uses /register endpoint (Issue #18)
+app.use("/register", registrationRouter);
+
