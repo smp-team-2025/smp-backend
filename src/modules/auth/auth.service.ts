@@ -10,6 +10,8 @@ export const authService = {
     const user = await prisma.user.findUnique({
       where: { email },
     });
+    console.log("DEBUG user from DB:", user);  // ← EKLE
+
 
     if (!user) {
       const error = new Error("INVALID_CREDENTIALS");
@@ -29,6 +31,8 @@ export const authService = {
       JWT_SECRET,
       { expiresIn: "1d" }
     );
+    console.log("DEBUG payload role:", user.role); // ← EKLE
+
 
     const { passwordHash, ...safeUser } = user;
 
