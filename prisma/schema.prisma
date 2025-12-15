@@ -4,6 +4,12 @@ enum RegistrationStatus {
   REJECTED
 }
 
+enum UserRole {
+  ORGANIZER
+  PARTICIPANT
+  HIWI
+}
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -18,8 +24,11 @@ model User {
   name      String
   email     String   @unique
   passwordHash String
-  role      String   @default("participant")
+  role UserRole @default(PARTICIPANT)
   createdAt DateTime @default(now())
+  registrationId Int?        @unique
+  registration   Registration? @relation(fields: [registrationId], references: [id])
+  hiwi HiWi?
 }
 
 model Registration {
@@ -45,6 +54,8 @@ model Registration {
 
   createdAt    DateTime @default(now())
   status       RegistrationStatus @default(PENDING)
+
+  user          User?
 }
 
 model Event {
@@ -91,6 +102,9 @@ model Session {
 
 model HiWi {
   id           Int      @id @default(autoincrement())
+  userId      Int    @unique
+  user        User   @relation(fields: [userId], references: [id])
+
   firstName    String
   lastName     String
   email        String   @unique

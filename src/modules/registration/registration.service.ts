@@ -1,3 +1,4 @@
+import { UserRole } from "@prisma/client";
 import { prisma } from "../../prisma";
 import bcrypt from "bcryptjs";
 
@@ -64,7 +65,8 @@ export const registrationService = {
         name: `${registration.firstName} ${registration.lastName}`,
         email: registration.email,
         passwordHash: passwordHash,
-        role: "participant",
+        role: UserRole.PARTICIPANT,
+        registrationId: registration.id,
       },
     });
 
