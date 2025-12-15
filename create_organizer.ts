@@ -4,32 +4,32 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('⏳ Seeding admin user...');
+  console.log('⏳ Seeding organizer user...');
 
   // 1. Hash the password
   const hashedPassword = await bcrypt.hash('123456', 10);
 
   try {
     // 2. Create the user
-    const newAdmin = await prisma.user.create({
+    const newOrganizer = await prisma.user.create({
       data: {
-        email: 'admin@smp.de',
+        email: 'organizer@smp.de',
         // YOUR SCHEMA USES 'passwordHash', NOT 'password'
         passwordHash: hashedPassword, 
-        name: 'System Admin',
+        name: 'Organizer 1',
         // Setting the role to admin
         role: 'organizer', 
       },
     });
 
-    console.log('✅ Admin user created successfully!');
+    console.log('✅ Organizer user created successfully!');
     console.log('-----------------------------------');
-    console.log(`📧 Email:    ${newAdmin.email}`);
+    console.log(`📧 Email:    ${newOrganizer.email}`);
     console.log(`🔑 Password: 123456`);
     console.log('-----------------------------------');
 
   } catch (error) {
-    console.error('❌ Error creating admin user:', error);
+    console.error('❌ Error creating organizer user:', error);
   }
 }
 
