@@ -29,6 +29,8 @@ model User {
   registrationId Int?        @unique
   registration   Registration? @relation(fields: [registrationId], references: [id])
   hiwi HiWi?
+  resetTokenHash      String?
+  resetTokenExpiresAt DateTime?
 }
 
 model Registration {

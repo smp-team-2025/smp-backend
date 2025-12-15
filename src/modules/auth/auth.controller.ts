@@ -27,4 +27,19 @@ export const authController = {
       return res.status(500).json({ error: "Internal server error" });
     }
   },
+
+  async resetPassword(req: Request, res: Response) {
+    const { token, newPassword } = req.body ?? {};
+    if (!token || typeof token !== "string") {
+      return res.status(400).json({ error: "TOKEN_REQUIRED" });
+    }
+    if (!newPassword || typeof newPassword !== "string" || newPassword.length < 8) {
+      return res.status(400).json({ error: "WEAK_PASSWORD" });
+    }
+
+    const ok = await authService.resetPassword(token, newPassword);
+    if (!ok) return res.status(400).json({ error: "INVALID_OR_EXPIRED_TOKEN" });
+
+    return res.json({ status: "ok" });
+  },
 };
