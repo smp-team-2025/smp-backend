@@ -1,19 +1,16 @@
 import { Router } from "express";
 import { registrationController } from "./registration.controller";
+import { requireAuth, requireRole } from "../../middleware/auth";
+
 
 export const registrationRouter = Router();
 
-// GET /api/registrations - Issue #32
-registrationRouter.get("/", registrationController.getAll);
 
-// GET /api/registrations/:id - Issue #33
-registrationRouter.get("/:id", registrationController.getById);
+// Organizer-Only
+registrationRouter.get("/", requireAuth, requireRole("organizer"), registrationController.getAll);
+registrationRouter.get("/:id", requireAuth, requireRole("organizer"), registrationController.getById);
+registrationRouter.post("/:id/approve", requireAuth, requireRole("organizer"), registrationController.approve);
+registrationRouter.post("/:id/reject", requireAuth, requireRole("organizer"), registrationController.reject);
 
-// POST /api/registrations/:id/approve - Issue #34
-registrationRouter.post("/:id/approve", registrationController.approve);
-
-// POST /api/registrations/:id/reject - Issue #35
-registrationRouter.post("/:id/reject", registrationController.reject);
-
-// POST /api/registrations
+// Public Registrations (students)
 registrationRouter.post("/", registrationController.create);

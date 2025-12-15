@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import { authRouter } from "./modules/auth/auth.router";
 import { registrationRouter } from "./modules/registration/registration.router";
+import { studentsRouter } from "./modules/students/students.router";
+
 
 
 
@@ -28,3 +30,5 @@ app.use("/api/registrations", registrationRouter);
 // Frontend uses /register endpoint (Issue #18)
 app.use("/register", registrationRouter);
 
+//Students endpoint
+app.use("/api/students", studentsRouter);

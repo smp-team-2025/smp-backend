@@ -18,7 +18,7 @@ async function main() {
         passwordHash: hashedPassword, 
         name: 'System Admin',
         // Setting the role to admin
-        role: 'admin', 
+        role: 'organizer', 
       },
     });
 
