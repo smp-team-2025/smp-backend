@@ -101,21 +101,11 @@ model Session {
 }
 
 model HiWi {
-  id           Int      @id @default(autoincrement())
-  userId      Int    @unique
-  user        User   @relation(fields: [userId], references: [id])
-
-  firstName    String
-  lastName     String
-  email        String   @unique
+  id           Int    @id @default(autoincrement())
+  userId       Int    @unique
+  user         User   @relation(fields: [userId], references: [id])
+  hiwiSessions HiWiSession[]
   clothingSize String?
-
-  sessions     HiWiSession[]
-
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@map("hiwis")
 }
 
 model HiWiSession {

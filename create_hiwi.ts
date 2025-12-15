@@ -4,23 +4,28 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('⏳ Seeding organizer user...');
+  console.log('⏳ Seeding hiwi user...');
 
   const hashedPassword = await bcrypt.hash('123456', 10);
 
   try {
-    const newOrganizer = await prisma.user.create({
+    const newHiwi = await prisma.user.create({
       data: {
-        email: 'organizer@smp.de',
+        email: 'hiwi@smp.de',
         passwordHash: hashedPassword, 
-        name: 'Organizer 1',
-        role: UserRole.ORGANIZER, 
+        name: 'Hiwi 1',
+        role: UserRole.HIWI, 
+        hiwi: {
+          create: {
+            clothingSize: "M",
+      },
+    },
       },
     });
 
-    console.log('✅ Organizer user created successfully!');
+    console.log('✅ Hiwi user created successfully!');
     console.log('-----------------------------------');
-    console.log(`📧 Email:    ${newOrganizer.email}`);
+    console.log(`📧 Email:    ${newHiwi.email}`);
     console.log(`🔑 Password: 123456`);
     console.log('-----------------------------------');
 
