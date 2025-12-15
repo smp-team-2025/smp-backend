@@ -28,6 +28,17 @@ export const authController = {
     }
   },
 
+  async forgotPassword(req: Request, res: Response) {
+    const { email } = req.body ?? {};
+    if (!email || typeof email !== "string") {
+      return res.status(400).json({ error: "EMAIL_REQUIRED" });
+    }
+
+    await authService.forgotPassword(email);
+
+    return res.json({ status: "ok" });
+  },
+
   async resetPassword(req: Request, res: Response) {
     const { token, newPassword } = req.body ?? {};
     if (!token || typeof token !== "string") {
