@@ -46,3 +46,43 @@ model Registration {
   createdAt    DateTime @default(now())
   status       RegistrationStatus @default(PENDING)
 }
+
+model Event {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  startDate   DateTime? 
+  endDate     DateTime? 
+  isActive    Boolean   @default(true)
+
+  sessions    Session[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("events")
+}
+
+model Session {
+  id          Int      @id @default(autoincrement())
+
+  eventId     Int
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  location    String?
+  startsAt    DateTime
+  endsAt      DateTime?
+
+  // For later (Zoom/attendance)
+  // zoomMeetingId String?
+  // zoomReportUrl String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([eventId])
+  @@index([startsAt])
+  @@map("sessions")
+}
