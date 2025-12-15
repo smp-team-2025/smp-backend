@@ -4,6 +4,8 @@ import { authRouter } from "./modules/auth/auth.router";
 import { registrationRouter } from "./modules/registration/registration.router";
 import { studentsRouter } from "./modules/students/students.router";
 import { eventsRouter } from "./modules/events/events.router";
+import { sessionsRouter } from "./modules/sessions/sessions.router";
+
 
 
 
@@ -36,3 +38,6 @@ app.use("/api/students", studentsRouter);
 
 //Events CRUD endpoint
 app.use("/api/events", eventsRouter);
+
+//Sessions CRUD endpoint
+app.use("/api/events/:id/sessions", sessionsRouter);
