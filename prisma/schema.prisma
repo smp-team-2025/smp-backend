@@ -82,7 +82,43 @@ model Session {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  hiwis HiWiSession[]
+
   @@index([eventId])
   @@index([startsAt])
   @@map("sessions")
+}
+
+model HiWi {
+  id           Int      @id @default(autoincrement())
+  firstName    String
+  lastName     String
+  email        String   @unique
+  clothingSize String?
+
+  sessions     HiWiSession[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("hiwis")
+}
+
+model HiWiSession {
+  id        Int      @id @default(autoincrement())
+
+  hiwiId    Int
+  hiwi      HiWi     @relation(fields: [hiwiId], references: [id], onDelete: Cascade)
+
+  sessionId Int
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  // HiWi attendance for that session
+  isPresent Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@unique([hiwiId, sessionId])
+  @@index([sessionId])
+  @@map("hiwi_sessions")
 }
