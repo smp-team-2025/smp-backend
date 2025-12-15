@@ -27,4 +27,17 @@ export const authController = {
       return res.status(500).json({ error: "Internal server error" });
     }
   },
+
+  async forgotPassword(req: Request, res:Response){
+    const {email} = req.body;
+    await authService.forgotPassword(email);
+    
+    res.json({message: "A reset link has been sent to your email"})
+  },
+
+  async resetPassword(req: Request, res: Response) {
+    const { token, newPassword } = req.body;
+    await authService.resetPassword(token, newPassword);
+    res.json({ message: "Password has been reset." });
+  },
 };

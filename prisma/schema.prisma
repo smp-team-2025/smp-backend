@@ -20,6 +20,8 @@ model User {
   passwordHash String
   role      String   @default("participant")
   createdAt DateTime @default(now())
+
+  resetTokens PasswordResetToken[]
 }
 
 model Registration {
@@ -45,4 +47,17 @@ model Registration {
 
   createdAt    DateTime @default(now())
   status       RegistrationStatus @default(PENDING)
+}
+
+model PasswordResetToken{
+  id        Int      @id @default(autoincrement())
+  tokenHash String   @unique
+  userId    Int
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields:  [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
