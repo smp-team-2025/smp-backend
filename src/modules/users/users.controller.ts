@@ -30,4 +30,32 @@ export const usersController = {
       return res.status(status).json({ error: e?.message ?? "INTERNAL_ERROR" });
     }
   },
+
+  async getBusinessCardPdf(req: AuthRequest, res: Response) {
+    const requestedId = Number(req.params.id);
+    if (Number.isNaN(requestedId)) {
+      return res.status(400).json({ error: "INVALID_USER_ID" });
+    }
+
+    const auth = (req as any).auth;
+    if (!auth) return res.status(401).json({ error: "UNAUTHORIZED" });
+
+    // PARTICIPANT can access only its own pdf
+    if (auth.role === UserRole.PARTICIPANT && auth.userId !== requestedId) {
+      return res.status(403).json({ error: "FORBIDDEN" });
+    }
+
+    // HIWI cant access pdf
+    if (auth.role === UserRole.HIWI) {
+      return res.status(403).json({ error: "FORBIDDEN" });
+    }
+
+    // ORGANIZER can access all pdfs
+    const { pdf, fileName } =
+      await usersService.generateBusinessCardPdf(requestedId);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="${fileName}"`);
+    return res.status(200).send(pdf);
+  },
 };
