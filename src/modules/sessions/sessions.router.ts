@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { sessionsController } from "./sessions.controller";
 import { requireAuth, requireRole } from "../../middleware/auth";
+import { UserRole } from "@prisma/client";
 
 export const sessionsRouter = Router({ mergeParams: true });
 
@@ -11,3 +12,25 @@ sessionsRouter.post("/", requireAuth, requireRole("organizer"), sessionsControll
 sessionsRouter.get("/:sessionId", requireAuth, requireRole("organizer"), sessionsController.getById);
 sessionsRouter.put("/:sessionId", requireAuth, requireRole("organizer"), sessionsController.update);
 sessionsRouter.delete("/:sessionId", requireAuth, requireRole("organizer"), sessionsController.remove);
+
+//Hiwi Assignment (Organizer Only)
+sessionsRouter.get(
+  "/:sessionId/hiwis",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER),
+  sessionsController.listAssignedHiwis
+);
+
+sessionsRouter.post(
+  "/:sessionId/hiwis",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER),
+  sessionsController.assignHiwi
+);
+
+sessionsRouter.delete(
+  "/:sessionId/hiwis/:hiwiId",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER),
+  sessionsController.unassignHiwi
+);

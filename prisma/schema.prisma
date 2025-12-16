@@ -118,10 +118,7 @@ model HiWiSession {
 
   sessionId Int
   session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  // HiWi attendance for that session
-  isPresent Boolean  @default(false)
-
+  
   createdAt DateTime @default(now())
 
   @@unique([hiwiId, sessionId])

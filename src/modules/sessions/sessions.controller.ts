@@ -102,4 +102,40 @@ export const sessionsController = {
 
     res.status(204).send();
   },
+
+  async listAssignedHiwis(req: Request, res: Response) {
+    const sessionId = Number(req.params.sessionId);
+    if (Number.isNaN(sessionId)) return res.status(400).json({ error: "INVALID_SESSION_ID" });
+
+    const data = await sessionsService.listAssignedHiwis(sessionId);
+    if (!data) return res.status(404).json({ error: "SESSION_NOT_FOUND" });
+
+    return res.json(data);
+  },
+
+  async assignHiwi(req: Request, res: Response) {
+    const sessionId = Number(req.params.sessionId);
+    if (Number.isNaN(sessionId)) return res.status(400).json({ error: "INVALID_SESSION_ID" });
+
+    const { hiwiId } = req.body ?? {};
+    const hiwiIdNum = Number(hiwiId);
+    if (Number.isNaN(hiwiIdNum)) return res.status(400).json({ error: "INVALID_HIWI_ID" });
+
+    const result = await sessionsService.assignHiwi(sessionId, hiwiIdNum);
+    if (result === "SESSION_NOT_FOUND") return res.status(404).json({ error: "SESSION_NOT_FOUND" });
+    if (result === "HIWI_NOT_FOUND") return res.status(404).json({ error: "HIWI_NOT_FOUND" });
+
+    return res.status(201).json(result);
+  },
+
+  async unassignHiwi(req: Request, res: Response) {
+    const sessionId = Number(req.params.sessionId);
+    const hiwiId = Number(req.params.hiwiId);
+    if (Number.isNaN(sessionId) || Number.isNaN(hiwiId)) return res.status(400).json({ error: "INVALID_ID" });
+
+    const ok = await sessionsService.unassignHiwi(sessionId, hiwiId);
+    if (!ok) return res.status(404).json({ error: "ASSIGNMENT_NOT_FOUND" });
+
+    return res.status(204).send();
+  },
 };

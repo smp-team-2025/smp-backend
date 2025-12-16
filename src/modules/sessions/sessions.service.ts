@@ -103,4 +103,62 @@ export const sessionsService = {
     await prisma.session.delete({ where: { id: sessionId } });
     return true;
   },
+
+  async listAssignedHiwis(sessionId: number) {
+    const session = await prisma.session.findUnique({ where: { id: sessionId } });
+    if (!session) return null;
+
+    const rows = await prisma.hiWiSession.findMany({
+      where: { sessionId },
+      include: {
+        hiwi: {
+          include: {
+            user: { select: { id: true, name: true, email: true, role: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    // Format for frontend
+    return rows.map((r) => ({
+      assignmentId: r.id,
+      sessionId: r.sessionId,
+      hiwiId: r.hiwiId,
+      assignedAt: r.createdAt,
+      hiwi: {
+        id: r.hiwi.id,
+        clothingSize: r.hiwi.clothingSize,
+        user: r.hiwi.user,
+      },
+    }));
+  },
+
+  async assignHiwi(sessionId: number, hiwiId: number) {
+    const [session, hiwi] = await Promise.all([
+      prisma.session.findUnique({ where: { id: sessionId } }),
+      prisma.hiWi.findUnique({ where: { id: hiwiId } }),
+    ]);
+
+    if (!session) return "SESSION_NOT_FOUND" as const;
+    if (!hiwi) return "HIWI_NOT_FOUND" as const;
+
+    return prisma.hiWiSession.upsert({
+      where: { hiwiId_sessionId: { hiwiId, sessionId } },
+      update: {},
+      create: { hiwiId, sessionId },
+    });
+  },
+
+  async unassignHiwi(sessionId: number, hiwiId: number) {
+    const existing = await prisma.hiWiSession.findUnique({
+      where: { hiwiId_sessionId: { hiwiId, sessionId } },
+    });
+    if (!existing) return false;
+
+    await prisma.hiWiSession.delete({
+      where: { hiwiId_sessionId: { hiwiId, sessionId } },
+    });
+    return true;
+  },
 };

@@ -5,6 +5,8 @@ import { registrationRouter } from "./modules/registration/registration.router";
 import { studentsRouter } from "./modules/students/students.router";
 import { eventsRouter } from "./modules/events/events.router";
 import { sessionsRouter } from "./modules/sessions/sessions.router";
+import { hiwiRouter } from "./modules/hiwi/hiwi.router";
+
 
 
 
@@ -41,3 +43,7 @@ app.use("/api/events", eventsRouter);
 
 //Sessions CRUD endpoint
 app.use("/api/events/:id/sessions", sessionsRouter);
+
+//Hiwi CRUD endpoint
+app.use("/api/hiwis", hiwiRouter);
+
