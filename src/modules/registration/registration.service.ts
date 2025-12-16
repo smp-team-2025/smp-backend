@@ -19,7 +19,6 @@ export type RegistrationInput = {
 };
 
 export const registrationService = {
-  // Issue #32: Get all registrations
   async getAllRegistrations() {
     const registrations = await prisma.registration.findMany({
       orderBy: { createdAt: "desc" },
@@ -27,7 +26,6 @@ export const registrationService = {
     return registrations;
   },
 
-  // Issue #33: Get registration by ID
   async getRegistrationById(id: number) {
     const registration = await prisma.registration.findUnique({
       where: { id },
@@ -35,10 +33,7 @@ export const registrationService = {
     return registration;
   },
 
-  // Issue #34: Approve registration
-  // Issue #22: Create User with random password on approve
   async approveRegistration(id: number) {
-    // 1. Get registration data
     const registration = await prisma.registration.findUnique({
       where: { id },
     });
@@ -47,19 +42,15 @@ export const registrationService = {
       throw new Error("Registration not found");
     }
 
-    // 2. Update status to APPROVED
     const updatedRegistration = await prisma.registration.update({
       where: { id },
       data: { status: "APPROVED" },
     });
 
-    // 3. Generate random password (8 characters)
     const randomPassword = Math.random().toString(36).slice(-8);
 
-    // 4. Hash the password
     const passwordHash = await bcrypt.hash(randomPassword, 10);
 
-    // 5. Create User account
     const user = await prisma.user.create({
       data: {
         name: `${registration.firstName} ${registration.lastName}`,
@@ -70,7 +61,7 @@ export const registrationService = {
       },
     });
 
-    // Issue #23: Log password to console (later: send via email)
+    // TODO: Change this as approval email
     console.log("========================================");
     console.log("NEW USER CREATED:");
     console.log(`Name: ${user.name}`);
@@ -81,7 +72,6 @@ export const registrationService = {
     return updatedRegistration;
   },
 
-  // Issue #35: Reject registration
   async rejectRegistration(id: number) {
     const registration = await prisma.registration.update({
       where: { id },

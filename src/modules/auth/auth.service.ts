@@ -15,7 +15,7 @@ export const authService = {
     const user = await prisma.user.findUnique({
       where: { email },
     });
-    console.log("DEBUG user from DB:", user);  // ← EKLE
+    console.log("DEBUG user from DB:", user); 
 
 
     if (!user) {
@@ -36,7 +36,7 @@ export const authService = {
       JWT_SECRET,
       { expiresIn: "1d" }
     );
-    console.log("DEBUG payload role:", user.role); // ← EKLE
+    console.log("DEBUG payload role:", user.role); 
 
 
     const { passwordHash, ...safeUser } = user;
