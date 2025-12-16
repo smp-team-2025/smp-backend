@@ -42,7 +42,7 @@ model Registration {
   firstName    String   
   lastName     String   
 
-  email        String 
+  email        String @unique
   confirmEmail String  
 
   street       String   
