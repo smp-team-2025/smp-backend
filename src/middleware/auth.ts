@@ -1,21 +1,37 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { UserRole } from "@prisma/client";
 
+//types
 export type AuthPayload = {
   userId: number;
-  role: string;
+  role: UserRole;
 };
 
-function getJwtSecret() {
+export type AuthRequest = Request & {
+  auth?: AuthPayload;
+};
+
+
+//Helpers
+function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error("JWT_SECRET is not set");
+  if (!secret) {
+    throw new Error("JWT_SECRET is not set");
+  }
   return secret;
 }
 
-export function requireAuth(req: Request, res: Response, next: NextFunction) {
+
+//Middleware
+export function requireAuth(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
   const header = req.headers.authorization;
 
-  if (!header?.startsWith("Bearer ")) {
+  if (!header || !header.startsWith("Bearer ")) {
     return res.status(401).json({ error: "UNAUTHORIZED" });
   }
 
@@ -23,19 +39,20 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 
   try {
     const payload = jwt.verify(token, getJwtSecret()) as AuthPayload;
-    (req as any).auth = payload;
+    req.auth = payload;
     next();
   } catch {
     return res.status(401).json({ error: "INVALID_TOKEN" });
   }
 }
 
-export function requireRole(role: string) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const auth = (req as any).auth as AuthPayload | undefined;
-    if (!auth) return res.status(401).json({ error: "UNAUTHORIZED" });
+export function requireRole(...allowedRoles: UserRole[]) {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.auth) {
+      return res.status(401).json({ error: "UNAUTHORIZED" });
+    }
 
-    if (auth.role !== role) {
+    if (!allowedRoles.includes(req.auth.role)) {
       return res.status(403).json({ error: "FORBIDDEN" });
     }
 
