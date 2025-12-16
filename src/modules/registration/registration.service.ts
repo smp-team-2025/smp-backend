@@ -48,8 +48,10 @@ export const registrationService = {
     });
 
     const randomPassword = Math.random().toString(36).slice(-8);
-
     const passwordHash = await bcrypt.hash(randomPassword, 10);
+
+    //Generating QR ID
+    const qrId = crypto.randomUUID();
 
     const user = await prisma.user.create({
       data: {
@@ -58,6 +60,7 @@ export const registrationService = {
         passwordHash: passwordHash,
         role: UserRole.PARTICIPANT,
         registrationId: registration.id,
+        qrId: qrId,
       },
     });
 
@@ -67,6 +70,7 @@ export const registrationService = {
     console.log(`Name: ${user.name}`);
     console.log(`Email: ${user.email}`);
     console.log(`Password: ${randomPassword}`);
+    console.log(`QR ID: ${qrId}`);
     console.log("========================================");
 
     return updatedRegistration;
