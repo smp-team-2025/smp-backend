@@ -4,6 +4,15 @@ import { UserRole } from "@prisma/client";
 import { usersService } from "./users.service";
 
 export const usersController = {
+
+  async me(req: any, res: Response) {
+      const auth = req.auth;
+      if (!auth) return res.status(401).json({ error: "UNAUTHORIZED" });
+
+      const me = await usersService.getMe(auth.userId);
+      return res.json(me); // { id, name, email, role }
+    },
+
   async getQrCodePng(req: AuthRequest, res: Response) {
     const requestedId = Number(req.params.id);
 

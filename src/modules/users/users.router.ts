@@ -4,6 +4,9 @@ import { usersController } from "./users.controller";
 
 export const usersRouter = Router();
 
+//GET /api/me
+usersRouter.get("/me", requireAuth, usersController.me);
+
 // GET /api/users/:id/qrcode
 usersRouter.get("/:id/qrcode", requireAuth, usersController.getQrCodePng);
 

@@ -3,6 +3,25 @@ import PDFDocument from "pdfkit";
 import { prisma } from "../../prisma";
 
 export const usersService = {
+  async getMe(userId: number) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
+    });
+
+    if (!user) {
+      const err: any = new Error("USER_NOT_FOUND");
+      err.status = 404;
+      throw err;
+    }
+    return user;
+  },
+
   async getQrCodePngByUserId(userId: number): Promise<{ png: Buffer; fileName: string }> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
