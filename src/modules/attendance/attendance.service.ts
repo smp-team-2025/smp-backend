@@ -9,6 +9,7 @@ type ScanInput = {
 };
 
 class AttendanceService {
+    //QR attendance taking by HiWi
   async scan({ qrId, sessionId, hiwiUserId }: ScanInput) {
     // Only HiWi can take attendance
     const hiwi = await prisma.hiWi.findUnique({
@@ -58,6 +59,7 @@ class AttendanceService {
     });
   }
 
+  //Manual Attendance taking by Organizers
   async manual({
     participantId,
     sessionId,
@@ -104,6 +106,7 @@ class AttendanceService {
     });
   }
 
+  //Removing attendance by Organizers
   async remove(attendanceId: number): Promise<boolean> {
     const existing = await prisma.attendance.findUnique({
       where: { id: attendanceId },
@@ -116,6 +119,35 @@ class AttendanceService {
     });
 
     return true;
+  }
+
+  //Participants can get their own attendance
+  async getMyAttendance(userId: number) {
+    return prisma.attendance.findMany({
+      where: {
+        participantId: userId,
+      },
+      include: {
+        session: {
+          select: {
+            id: true,
+            title: true,
+            startsAt: true,
+            endsAt: true,
+            location: true,
+            event: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        scannedAt: "asc",
+      },
+    });
   }
 }
 

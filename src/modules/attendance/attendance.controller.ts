@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { attendanceService } from "./attendance.service";
 
 class AttendanceController {
+    //QR attendance taking by HiWi
   async scan(req: Request, res: Response) {
     const { qrId, sessionId } = req.body;
 
@@ -29,6 +30,7 @@ class AttendanceController {
     }
   }
 
+    //Manual Attendance taking by Organizers
   async manual(req: Request, res: Response) {
     const { participantId, sessionId } = req.body;
 
@@ -52,6 +54,7 @@ class AttendanceController {
     }
   }
 
+    //Removing attendance by Organizers
   async remove(req: Request, res: Response) {
     const attendanceId = Number(req.params.attendanceId);
 
@@ -66,6 +69,25 @@ class AttendanceController {
     }
 
     return res.json({ success: true });
+  }
+
+  //Participants can get their own attendance
+  async getMyAttendance(req: Request, res: Response) {
+    const auth = (req as any).auth;
+
+    const data = await attendanceService.getMyAttendance(auth.userId);
+
+    return res.json(
+      data.map((a) => ({
+        sessionId: a.session.id,
+        sessionTitle: a.session.title,
+        startsAt: a.session.startsAt,
+        endsAt: a.session.endsAt,
+        location: a.session.location,
+        eventTitle: a.session.event.title,
+        scannedAt: a.scannedAt,
+      }))
+    );
   }
 }
 

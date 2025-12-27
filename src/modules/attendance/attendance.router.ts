@@ -28,3 +28,11 @@ attendanceRouter.delete(
   requireRole(UserRole.ORGANIZER),
   attendanceController.remove
 );
+
+// GET /api/attendance/me (Participant only)
+attendanceRouter.get(
+  "/me",
+  requireAuth,
+  requireRole(UserRole.PARTICIPANT),
+  attendanceController.getMyAttendance
+);
