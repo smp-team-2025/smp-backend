@@ -39,6 +39,5 @@ sessionsRouter.delete(
 sessionsRouter.get(
   "/:sessionId/attendance",
   requireAuth,
-  requireRole(UserRole.ORGANIZER),
   sessionsController.getAttendance
 );

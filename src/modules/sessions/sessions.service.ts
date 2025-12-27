@@ -163,33 +163,33 @@ export const sessionsService = {
   },
 
   async getAttendance(sessionId: number) {
-    return prisma.attendance.findMany({
-      where: {
-        sessionId,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            qrId: true,
-          },
+  return prisma.attendance.findMany({
+    where: {
+      sessionId,
+    },
+    include: {
+      participant: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          qrId: true,
         },
-        scannedByHiwi: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-              },
+      },
+      scannedByHiwi: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
             },
           },
         },
       },
-      orderBy: {
-        scannedAt: "asc",
-      },
-    });
+    },
+    orderBy: {
+      scannedAt: "asc",
+    },
+  });
   },
 };

@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { sessionsService } from "./sessions.service";
+import { UserRole } from "@prisma/client";
+import { prisma } from "../../prisma";
 
 function toIntId(param: string) {
   const n = Number(param);
@@ -140,14 +142,35 @@ export const sessionsController = {
   },
 
   async getAttendance(req: Request, res: Response) {
-    const sessionId = Number(req.params.sessionId);
+  const sessionId = Number(req.params.sessionId);
+  const auth = (req as any).auth as { userId: number; role: UserRole };
 
-    if (isNaN(sessionId)) {
-      return res.status(400).json({ error: "INVALID_SESSION_ID" });
+  // ORGANIZER can see attendance of all sessions
+  if (auth.role === UserRole.ORGANIZER) {
+    const data = await sessionsService.getAttendance(sessionId);
+    return res.json(data);
+  }
+
+  // HIWI can only see attendance of their session
+  if (auth.role === UserRole.HIWI) {
+    const assigned = await prisma.hiWiSession.findFirst({
+      where: {
+        sessionId,
+        hiwi: {
+          userId: auth.userId,
+        },
+      },
+    });
+
+    if (!assigned) {
+      return res.status(403).json({ error: "FORBIDDEN" });
     }
 
-    const attendance = await sessionsService.getAttendance(sessionId);
+    const data = await sessionsService.getAttendance(sessionId);
+    return res.json(data);
+  }
 
-    return res.json(attendance);
-  },
+  // PARTICIPANT cant see attendance
+  return res.status(403).json({ error: "FORBIDDEN" });
+}
 };
