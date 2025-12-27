@@ -142,35 +142,54 @@ export const sessionsController = {
   },
 
   async getAttendance(req: Request, res: Response) {
-  const sessionId = Number(req.params.sessionId);
-  const auth = (req as any).auth as { userId: number; role: UserRole };
+    const sessionId = Number(req.params.sessionId);
+    const auth = (req as any).auth as { userId: number; role: UserRole };
 
-  // ORGANIZER can see attendance of all sessions
-  if (auth.role === UserRole.ORGANIZER) {
-    const data = await sessionsService.getAttendance(sessionId);
-    return res.json(data);
-  }
+    // ORGANIZER can see attendance of all sessions
+    if (auth.role === UserRole.ORGANIZER) {
+      const data = await sessionsService.getAttendance(sessionId);
+      return res.json(data);
+    }
 
-  // HIWI can only see attendance of their session
-  if (auth.role === UserRole.HIWI) {
-    const assigned = await prisma.hiWiSession.findFirst({
-      where: {
-        sessionId,
-        hiwi: {
-          userId: auth.userId,
+    // HIWI can only see attendance of their session
+    if (auth.role === UserRole.HIWI) {
+      const assigned = await prisma.hiWiSession.findFirst({
+        where: {
+          sessionId,
+          hiwi: {
+            userId: auth.userId,
+          },
         },
-      },
-    });
+      });
 
-    if (!assigned) {
+      if (!assigned) {
+        return res.status(403).json({ error: "FORBIDDEN" });
+      }
+
+      const data = await sessionsService.getAttendance(sessionId);
+      return res.json(data);
+    }
+
+    // PARTICIPANT cant see attendance
+    return res.status(403).json({ error: "FORBIDDEN" });
+  },
+
+  async getSummary(req: Request, res: Response) {
+    const auth = (req as any).auth;
+
+    if (auth.role === UserRole.PARTICIPANT) {
       return res.status(403).json({ error: "FORBIDDEN" });
     }
 
-    const data = await sessionsService.getAttendance(sessionId);
-    return res.json(data);
-  }
+    const sessions = await sessionsService.getSummary();
 
-  // PARTICIPANT cant see attendance
-  return res.status(403).json({ error: "FORBIDDEN" });
-}
+    const summary = sessions.map((s) => ({
+      sessionId: s.id,
+      title: s.title,
+      startsAt: s.startsAt,
+      attendanceCount: s._count.attendances,
+    }));
+
+    return res.json(summary);
+  }
 };

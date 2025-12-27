@@ -41,3 +41,10 @@ sessionsRouter.get(
   requireAuth,
   sessionsController.getAttendance
 );
+
+// GET /api/sessions/summary
+sessionsRouter.get(
+  "/summary",
+  requireAuth,
+  sessionsController.getSummary
+);

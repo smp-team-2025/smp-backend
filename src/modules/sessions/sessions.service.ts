@@ -192,4 +192,22 @@ export const sessionsService = {
     },
   });
   },
+
+  async getSummary() {
+    return prisma.session.findMany({
+      select: {
+        id: true,
+        title: true,
+        startsAt: true,
+        _count: {
+          select: {
+            attendances: true,
+          },
+        },
+      },
+      orderBy: {
+        startsAt: "asc",
+      },
+    });
+  },
 };
