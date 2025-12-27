@@ -57,6 +57,52 @@ class AttendanceService {
       },
     });
   }
+
+  async manual({
+    participantId,
+    sessionId,
+  }: {
+    participantId: number;
+    sessionId: number;
+  }) {
+    const participant = await prisma.user.findUnique({
+      where: { id: participantId },
+    });
+
+    if (!participant || participant.role !== UserRole.PARTICIPANT) {
+      throw new Error("INVALID_PARTICIPANT");
+    }
+
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+    });
+
+    if (!session) {
+      throw new Error("SESSION_NOT_FOUND");
+    }
+
+    // Duplicate attendance control
+    const existing = await prisma.attendance.findUnique({
+      where: {
+        participantId_sessionId: {
+          participantId,
+          sessionId,
+        },
+      },
+    });
+
+    if (existing) {
+      throw new Error("ALREADY_PRESENT");
+    }
+
+    return prisma.attendance.create({
+      data: {
+        participantId,
+        sessionId,
+        scannedByHiwiId: null, // Organizers take manual attendance
+      },
+    });
+  }
 }
 
 export const attendanceService = new AttendanceService();

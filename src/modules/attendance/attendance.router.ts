@@ -12,3 +12,11 @@ attendanceRouter.post(
   requireRole(UserRole.HIWI),
   attendanceController.scan
 );
+
+// POST /api/attendance/manual
+attendanceRouter.post(
+  "/manual",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER), //Organizer only
+  attendanceController.manual
+);
