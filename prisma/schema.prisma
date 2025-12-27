@@ -32,6 +32,7 @@ model User {
   resetTokenHash      String?
   resetTokenExpiresAt DateTime?
   qrId         String?  @unique
+  attendances Attendance[]
 
 }
 
@@ -99,6 +100,8 @@ model Session {
 
   hiwis HiWiSession[]
 
+  attendances Attendance[]
+
   @@index([eventId])
   @@index([startsAt])
   @@map("sessions")
@@ -110,6 +113,7 @@ model HiWi {
   user         User   @relation(fields: [userId], references: [id])
   hiwiSessions HiWiSession[]
   clothingSize String?
+  scannedAttendances Attendance[]
 }
 
 model HiWiSession {
@@ -126,4 +130,24 @@ model HiWiSession {
   @@unique([hiwiId, sessionId])
   @@index([sessionId])
   @@map("hiwi_sessions")
+}
+
+model Attendance {
+  id            Int      @id @default(autoincrement())
+
+  participantId Int
+  participant   User     @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  sessionId     Int
+  session       Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  scannedByHiwiId Int?
+  scannedByHiwi   HiWi?   @relation(fields: [scannedByHiwiId], references: [id])
+
+  scannedAt     DateTime @default(now())
+
+  @@unique([participantId, sessionId])
+  @@index([sessionId])
+  @@index([participantId])
+  @@map("attendances")
 }
