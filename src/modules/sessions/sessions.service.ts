@@ -161,4 +161,35 @@ export const sessionsService = {
     });
     return true;
   },
+
+  async getAttendance(sessionId: number) {
+    return prisma.attendance.findMany({
+      where: {
+        sessionId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            qrId: true,
+          },
+        },
+        scannedByHiwi: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        scannedAt: "asc",
+      },
+    });
+  },
 };

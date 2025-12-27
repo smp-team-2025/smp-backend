@@ -138,4 +138,16 @@ export const sessionsController = {
 
     return res.status(204).send();
   },
+
+  async getAttendance(req: Request, res: Response) {
+    const sessionId = Number(req.params.sessionId);
+
+    if (isNaN(sessionId)) {
+      return res.status(400).json({ error: "INVALID_SESSION_ID" });
+    }
+
+    const attendance = await sessionsService.getAttendance(sessionId);
+
+    return res.json(attendance);
+  },
 };

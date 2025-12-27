@@ -34,3 +34,11 @@ sessionsRouter.delete(
   requireRole(UserRole.ORGANIZER),
   sessionsController.unassignHiwi
 );
+
+// GET /api/sessions/:sessionId/attendance
+sessionsRouter.get(
+  "/:sessionId/attendance",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER),
+  sessionsController.getAttendance
+);
