@@ -103,6 +103,20 @@ class AttendanceService {
       },
     });
   }
+
+  async remove(attendanceId: number): Promise<boolean> {
+    const existing = await prisma.attendance.findUnique({
+      where: { id: attendanceId },
+    });
+
+    if (!existing) return false;
+
+    await prisma.attendance.delete({
+      where: { id: attendanceId },
+    });
+
+    return true;
+  }
 }
 
 export const attendanceService = new AttendanceService();

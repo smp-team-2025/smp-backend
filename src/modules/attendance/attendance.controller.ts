@@ -51,6 +51,22 @@ class AttendanceController {
       });
     }
   }
+
+  async remove(req: Request, res: Response) {
+    const attendanceId = Number(req.params.attendanceId);
+
+    if (Number.isNaN(attendanceId)) {
+      return res.status(400).json({ error: "INVALID_ATTENDANCE_ID" });
+    }
+
+    const deleted = await attendanceService.remove(attendanceId);
+
+    if (!deleted) {
+      return res.status(404).json({ error: "ATTENDANCE_NOT_FOUND" });
+    }
+
+    return res.json({ success: true });
+  }
 }
 
 export const attendanceController = new AttendanceController();

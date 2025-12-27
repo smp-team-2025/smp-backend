@@ -20,3 +20,11 @@ attendanceRouter.post(
   requireRole(UserRole.ORGANIZER), //Organizer only
   attendanceController.manual
 );
+
+// DELETE /api/attendance/:attendanceId (Organizer only)
+attendanceRouter.delete(
+  "/:attendanceId", //Delete by Attendance ID
+  requireAuth,
+  requireRole(UserRole.ORGANIZER),
+  attendanceController.remove
+);
