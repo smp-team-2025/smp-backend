@@ -7,6 +7,8 @@ import { eventsRouter } from "./modules/events/events.router";
 import { sessionsRouter } from "./modules/sessions/sessions.router";
 import { hiwiRouter } from "./modules/hiwi/hiwi.router";
 import { usersRouter } from "./modules/users/users.router";
+import { attendanceRouter } from "./modules/attendance/attendance.router";
+
 
 
 
@@ -52,3 +54,5 @@ app.use("/api/hiwis", hiwiRouter);
 //Users endpoint
 app.use("/api/users", usersRouter);
 
+//Attendance endpoint
+app.use("/api/attendance", attendanceRouter);
