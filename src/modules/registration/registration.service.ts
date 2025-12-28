@@ -1,6 +1,8 @@
 import { UserRole } from "@prisma/client";
 import { prisma } from "../../prisma";
 import bcrypt from "bcryptjs";
+import { sendApprovalEmail } from "./registration.mail.service";
+
 
 export type RegistrationInput = {
   salutation: string;
@@ -64,14 +66,7 @@ export const registrationService = {
       },
     });
 
-    // TODO: Change this as approval email
-    console.log("========================================");
-    console.log("NEW USER CREATED:");
-    console.log(`Name: ${user.name}`);
-    console.log(`Email: ${user.email}`);
-    console.log(`Password: ${randomPassword}`);
-    console.log(`QR ID: ${qrId}`);
-    console.log("========================================");
+    await sendApprovalEmail(user.email,user.name,randomPassword);
 
     return updatedRegistration;
   },

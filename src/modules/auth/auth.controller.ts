@@ -29,28 +29,40 @@ export const authController = {
   },
 
   async forgotPassword(req: Request, res: Response) {
-    const { email } = req.body ?? {};
-    if (!email || typeof email !== "string") {
-      return res.status(400).json({ error: "EMAIL_REQUIRED" });
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Missing email" });
+
+    try {
+      await authService.forgotPassword(email);
+      return res.json({ status: "ok" });
+    } catch (err) {
+      console.error("Error in forgotPassword:", err);
+      return res.status(500).json({ error: "Internal server error" });
     }
-
-    await authService.forgotPassword(email);
-
-    return res.json({ status: "ok" });
   },
 
   async resetPassword(req: Request, res: Response) {
-    const { token, newPassword } = req.body ?? {};
-    if (!token || typeof token !== "string") {
-      return res.status(400).json({ error: "TOKEN_REQUIRED" });
-    }
-    if (!newPassword || typeof newPassword !== "string" || newPassword.length < 8) {
-      return res.status(400).json({ error: "WEAK_PASSWORD" });
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: "Missing token or newPassword" });
     }
 
-    const ok = await authService.resetPassword(token, newPassword);
-    if (!ok) return res.status(400).json({ error: "INVALID_OR_EXPIRED_TOKEN" });
+    if (!newPassword || newPassword.length < 8) {
+  return res.status(400).json({ error: "PASSWORD_TOO_SHORT" });
+}
 
-    return res.json({ status: "ok" });
+
+    try {
+      await authService.resetPassword(token, newPassword);
+      return res.json({ status: "ok" });
+    } catch (err: any) {
+      
+      if (["INVALID_TOKEN", "TOKEN_USED", "TOKEN_EXPIRED"].includes(err.message)) {
+        return res.status(400).json({ error: err.message });
+      }
+
+      console.error("Error in resetPassword:", err);
+      return res.status(500).json({ error: "Internal server error" });
+    }
   },
 };
