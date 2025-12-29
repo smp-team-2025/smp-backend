@@ -23,20 +23,24 @@ export async function sendApprovalEmail(
  *             the EMAIL_FROM address should be updated accordingly.           
  */
 
-  await resend.emails.send({
-    from: process.env.EMAIL_FROM|| "SMP <onboarding@resend.dev",
-    to,
-    subject: "Your SMP registration has been approved",
-  html: `
-    <p>Hello ${name},</p>
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to,
+      subject: "Your SMP registration has been approved",
+      html: `
+        <p>Hello ${name},</p>
 
-    <p>Your registration for SMP has been approved.</p>
+        <p>Your registration for SMP has been approved.</p>
 
-    <p><strong>Your login credentials:</strong></p>
-    <ul>
-      <li>Email: ${to}</li>
-      <li>password: <strong>${password}</strong></li>
-    </ul>
-  `,
-  });
+        <p><strong>Your login credentials:</strong></p>
+        <ul>
+          <li>Email: ${to}</li>
+          <li>Password: <strong>${password}</strong></li>
+        </ul>
+      `,
+    });
+  } catch (err) {
+    console.error("[APPROVAL EMAIL ERROR]", err);
+  }
 }
