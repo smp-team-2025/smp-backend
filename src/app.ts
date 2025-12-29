@@ -8,6 +8,8 @@ import { sessionsRouter } from "./modules/sessions/sessions.router";
 import { hiwiRouter } from "./modules/hiwi/hiwi.router";
 import { usersRouter } from "./modules/users/users.router";
 import { attendanceRouter } from "./modules/attendance/attendance.router";
+import { announcementsRouter } from "./modules/announcements/announcements.router";
+
 
 
 
@@ -56,3 +58,6 @@ app.use("/api/users", usersRouter);
 
 //Attendance endpoint
 app.use("/api/attendance", attendanceRouter);
+
+//Announcements endpoint
+app.use("/api/announcements", announcementsRouter);
