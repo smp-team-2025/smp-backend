@@ -5,7 +5,7 @@ import { usersService } from "./users.service";
 
 export const usersController = {
 
-  async me(req: any, res: Response) {
+  async me(req: AuthRequest, res: Response) {
       const auth = req.auth;
       if (!auth) return res.status(401).json({ error: "UNAUTHORIZED" });
 

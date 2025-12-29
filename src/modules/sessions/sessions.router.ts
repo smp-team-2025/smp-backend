@@ -39,6 +39,7 @@ sessionsRouter.delete(
 sessionsRouter.get(
   "/:sessionId/attendance",
   requireAuth,
+  requireRole(UserRole.ORGANIZER, UserRole.HIWI),
   sessionsController.getAttendance
 );
 
@@ -46,5 +47,6 @@ sessionsRouter.get(
 sessionsRouter.get(
   "/summary",
   requireAuth,
+  requireRole(UserRole.ORGANIZER, UserRole.HIWI),
   sessionsController.getSummary
 );
