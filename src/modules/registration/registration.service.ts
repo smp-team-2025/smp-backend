@@ -2,6 +2,7 @@ import { UserRole } from "@prisma/client";
 import { prisma } from "../../prisma";
 import bcrypt from "bcryptjs";
 import { sendApprovalEmail } from "./registration.mail.service";
+import crypto from "crypto";
 
 
 export type RegistrationInput = {
@@ -49,7 +50,7 @@ export const registrationService = {
       data: { status: "APPROVED" },
     });
 
-    const randomPassword = Math.random().toString(36).slice(-8);
+    const randomPassword = crypto.randomBytes(12).toString("base64url");
     const passwordHash = await bcrypt.hash(randomPassword, 10);
 
     //Generating QR ID
