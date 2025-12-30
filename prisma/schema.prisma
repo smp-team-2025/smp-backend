@@ -64,6 +64,7 @@ model Registration {
   user User?
 }
 
+//Events are yearly organisations, e.g. SMP2024, SMP2025 etc.
 model Event {
   id          Int       @id @default(autoincrement())
   title       String
@@ -81,6 +82,7 @@ model Event {
   @@map("events")
 }
 
+//Sessions are days in an event, e.g. day1 of SMP2025
 model Session {
   id Int @id @default(autoincrement())
 
