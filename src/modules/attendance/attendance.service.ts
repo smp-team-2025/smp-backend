@@ -1,6 +1,6 @@
 import { PrismaClient, UserRole } from "@prisma/client";
-import { parseZoomCsv } from "../../services/zoomCsv";
 import { isSimilar } from "../../services/nameMatch";
+import type { ZoomCsvRow } from "../../services/zoomCsv";
 
 const prisma = new PrismaClient();
 
@@ -150,6 +150,36 @@ class AttendanceService {
         scannedAt: "asc",
       },
     });
+  }
+
+  private async matchParticipant(row: ZoomCsvRow) {
+    if (row.email) {
+      const byEmail = await prisma.user.findUnique({
+        where: { email: row.email },
+      });
+      if (byEmail) return byEmail;
+    }
+
+    // name matching if no email
+    if (!row.name) return null;
+
+    const candidates = await prisma.user.findMany({
+      where: {
+        role: UserRole.PARTICIPANT,
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    for (const user of candidates) {
+      if (isSimilar(user.name, row.name)) {
+        return user;
+      }
+    }
+
+    return null;
   }
 
   async importZoomCsv({

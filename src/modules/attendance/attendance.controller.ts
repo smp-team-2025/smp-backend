@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { attendanceService } from "./attendance.service";
+import { parseZoomCsv } from "../../services/zoomCsv";
 
 class AttendanceController {
     //QR attendance taking by HiWi
