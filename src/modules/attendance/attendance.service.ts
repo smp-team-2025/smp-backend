@@ -1,4 +1,6 @@
 import { PrismaClient, UserRole } from "@prisma/client";
+import { parseZoomCsv } from "../../services/zoomCsv";
+import { isSimilar } from "../../services/nameMatch";
 
 const prisma = new PrismaClient();
 
@@ -149,6 +151,75 @@ class AttendanceService {
       },
     });
   }
-}
+
+  async importZoomCsv({
+    sessionId,
+    filePath,
+  }: {
+    sessionId: number;
+    filePath: string;
+  }) {
+    const rows = await parseZoomCsv(filePath);
+
+    const participants = await prisma.user.findMany({
+      where: { role: "PARTICIPANT" },
+      select: { id: true, name: true, email: true },
+    });
+
+    const result = {
+      imported: 0,
+      skipped: 0,
+      unmatched: [] as { name: string; email?: string }[],
+    };
+
+    for (const row of rows) {
+      let user =
+        row.email &&
+        participants.find(
+          (p) => p.email?.toLowerCase() === row.email?.toLowerCase()
+        );
+
+      if (!user) {
+        user = participants.find((p) => isSimilar(p.name, row.name));
+      }
+
+      if (!user) {
+        result.unmatched.push({ name: row.name, email: row.email });
+        continue;
+      }
+
+      await prisma.attendance.upsert({
+        where: {
+          participantId_sessionId: {
+            participantId: user.id,
+            sessionId,
+          },
+        },
+        update: {
+          source: "ONLINE",
+          zoomDisplayName: row.name,
+          zoomEmail: row.email,
+          zoomJoinTime: row.joinTime ? new Date(row.joinTime) : null,
+          zoomLeaveTime: row.leaveTime ? new Date(row.leaveTime) : null,
+          zoomDurationMin: row.durationMin,
+        },
+        create: {
+          participantId: user.id,
+          sessionId,
+          source: "ONLINE",
+          zoomDisplayName: row.name,
+          zoomEmail: row.email,
+          zoomJoinTime: row.joinTime ? new Date(row.joinTime) : null,
+          zoomLeaveTime: row.leaveTime ? new Date(row.leaveTime) : null,
+          zoomDurationMin: row.durationMin,
+        },
+      });
+
+      result.imported++;
+    }
+
+    return result;
+  }
+};
 
 export const attendanceService = new AttendanceService();

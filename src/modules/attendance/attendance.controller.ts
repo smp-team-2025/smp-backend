@@ -89,6 +89,25 @@ class AttendanceController {
       }))
     );
   }
+
+  //Organizers upload zoom attendance as csv
+  async uploadZoomCsv(req: Request, res: Response) {
+    const sessionId = Number(req.body.sessionId);
+    const file = req.file;
+
+    if (!sessionId || !file) {
+      return res.status(400).json({
+        error: "sessionId and CSV file are required",
+      });
+    }
+
+    const result = await attendanceService.importZoomCsv({
+      sessionId,
+      filePath: file.path,
+    });
+
+    return res.json(result);
+  }
 }
 
 export const attendanceController = new AttendanceController();

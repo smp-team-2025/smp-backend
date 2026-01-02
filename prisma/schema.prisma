@@ -10,6 +10,11 @@ enum UserRole {
   HIWI
 }
 
+enum AttendanceSource {
+  ONSITE //Hörsaal
+  ONLINE //Zoom
+}
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -150,6 +155,13 @@ model Attendance {
   scannedByHiwi   HiWi? @relation(fields: [scannedByHiwiId], references: [id])
 
   scannedAt DateTime @default(now())
+
+  source           AttendanceSource @default(ONSITE)
+  zoomDisplayName  String?
+  zoomEmail        String?
+  zoomJoinTime     DateTime?
+  zoomLeaveTime    DateTime?
+  zoomDurationMin  Int?
 
   @@unique([participantId, sessionId])
   @@index([sessionId])
