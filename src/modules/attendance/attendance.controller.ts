@@ -101,12 +101,21 @@ class AttendanceController {
       });
     }
 
+    const rows = await parseZoomCsv(file.path);
+
     const result = await attendanceService.importZoomCsv({
       sessionId,
-      filePath: file.path,
+      rows,
     });
 
     return res.json(result);
+  }
+
+  async getZoomUnmatched(req: Request, res: Response) {
+    const sessionId = Number(req.params.sessionId);
+
+    const data = await attendanceService.getZoomUnmatched(sessionId);
+    return res.json(data);
   }
 }
 

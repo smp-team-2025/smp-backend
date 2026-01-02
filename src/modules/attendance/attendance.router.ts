@@ -48,3 +48,11 @@ attendanceRouter.post(
   upload.single("file"),
   attendanceController.uploadZoomCsv
 );
+
+//GET /api/attendance/sessions/:sessionId/zoom-unmatched (Organizer Only)
+attendanceRouter.get(
+  "/sessions/:sessionId/zoom-unmatched",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER),
+  attendanceController.getZoomUnmatched
+);

@@ -110,7 +110,10 @@ model Session {
   hiwis HiWiSession[]
 
   attendances        Attendance[]
+  
   staffAnnouncements StaffAnnouncement[]
+
+  zoomUnmatchedParticipants ZoomUnmatchedParticipant[]
 
   @@index([eventId])
   @@index([startsAt])
@@ -188,4 +191,20 @@ model StaffAnnouncement {
   @@index([eventId])
   @@index([sessionId])
   @@map("staff_announcements")
+}
+
+model ZoomUnmatchedParticipant {
+  id          Int @id @default(autoincrement())
+
+  sessionId   Int
+  session     Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  displayName String
+  email       String?
+  durationMin Int?
+
+  createdAt   DateTime @default(now())
+
+  @@index([sessionId])
+  @@map("zoom_unmatched_participants")
 }

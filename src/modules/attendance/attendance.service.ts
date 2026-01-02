@@ -154,37 +154,19 @@ class AttendanceService {
 
   async importZoomCsv({
     sessionId,
-    filePath,
+    rows,
   }: {
     sessionId: number;
-    filePath: string;
+    rows: ZoomCsvRow[];
   }) {
-    const rows = await parseZoomCsv(filePath);
-
-    const participants = await prisma.user.findMany({
-      where: { role: "PARTICIPANT" },
-      select: { id: true, name: true, email: true },
-    });
-
-    const result = {
-      imported: 0,
-      skipped: 0,
-      unmatched: [] as { name: string; email?: string }[],
-    };
+    const unmatched: ZoomCsvRow[] = [];
+    let matchedCount = 0;
 
     for (const row of rows) {
-      let user =
-        row.email &&
-        participants.find(
-          (p) => p.email?.toLowerCase() === row.email?.toLowerCase()
-        );
+      const user = await this.matchParticipant(row);
 
       if (!user) {
-        user = participants.find((p) => isSimilar(p.name, row.name));
-      }
-
-      if (!user) {
-        result.unmatched.push({ name: row.name, email: row.email });
+        unmatched.push(row);
         continue;
       }
 
@@ -195,30 +177,41 @@ class AttendanceService {
             sessionId,
           },
         },
-        update: {
-          source: "ONLINE",
-          zoomDisplayName: row.name,
-          zoomEmail: row.email,
-          zoomJoinTime: row.joinTime ? new Date(row.joinTime) : null,
-          zoomLeaveTime: row.leaveTime ? new Date(row.leaveTime) : null,
-          zoomDurationMin: row.durationMin,
-        },
         create: {
           participantId: user.id,
           sessionId,
-          source: "ONLINE",
-          zoomDisplayName: row.name,
-          zoomEmail: row.email,
-          zoomJoinTime: row.joinTime ? new Date(row.joinTime) : null,
-          zoomLeaveTime: row.leaveTime ? new Date(row.leaveTime) : null,
-          zoomDurationMin: row.durationMin,
-        },
-      });
+         scannedAt: new Date(row.joinTime ?? Date.now()),
+       },
+        update: {},
+     });
 
-      result.imported++;
+     matchedCount++;
     }
 
-    return result;
+    if (unmatched.length > 0) {
+      await prisma.zoomUnmatchedParticipant.createMany({
+        data: unmatched.map((u) => ({
+          sessionId,
+          displayName: u.name,
+          email: u.email ?? null,
+          joinTime: u.joinTime ? new Date(u.joinTime) : null,
+          leaveTime: u.leaveTime ? new Date(u.leaveTime) : null,
+          durationMin: u.durationMin ?? null,
+        })),
+      });
+    }
+
+    return {
+      matchedCount,
+      unmatchedCount: unmatched.length,
+    };
+  }
+
+  async getZoomUnmatched(sessionId: number) {
+    return prisma.zoomUnmatchedParticipant.findMany({
+      where: { sessionId },
+      orderBy: { createdAt: "asc" },
+    });
   }
 };
 
