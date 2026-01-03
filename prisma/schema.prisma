@@ -40,6 +40,7 @@ model User {
   attendances         Attendance[]
 
   staffAnnouncements StaffAnnouncement[]
+  fermiResponses     FermiResponse[]
 }
 
 model Registration {
@@ -100,10 +101,6 @@ model Session {
   startsAt    DateTime
   endsAt      DateTime?
 
-  // For later (Zoom/attendance)
-  // zoomMeetingId String?
-  // zoomReportUrl String?
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -112,6 +109,7 @@ model Session {
   attendances        Attendance[]
   
   staffAnnouncements StaffAnnouncement[]
+  fermiQuiz          FermiQuiz?
 
   zoomUnmatchedParticipants ZoomUnmatchedParticipant[]
 
@@ -207,4 +205,55 @@ model ZoomUnmatchedParticipant {
 
   @@index([sessionId])
   @@map("zoom_unmatched_participants")
+}
+
+model FermiQuestion {
+  id            Int      @id @default(autoincrement())
+  text          String   @db.Text
+  correctAnswer Float?
+  createdAt     DateTime @default(now())
+
+  quizQuestions FermiQuizQuestion[]
+
+  @@map("fermi_questions")
+}
+
+model FermiQuiz {
+  id        Int      @id @default(autoincrement())
+  sessionId Int      @unique
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  questions FermiQuizQuestion[]
+  responses FermiResponse[]
+
+  @@map("fermi_quizzes")
+}
+
+model FermiQuizQuestion {
+  id         Int      @id @default(autoincrement())
+  quizId     Int
+  quiz       FermiQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  questionId Int
+  question   FermiQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  order      Int
+
+  @@unique([quizId, order])
+  @@unique([quizId, questionId])
+  @@index([quizId])
+  @@map("fermi_quiz_questions")
+}
+
+model FermiResponse {
+  id            Int      @id @default(autoincrement())
+  participantId Int
+  participant   User     @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  quizId        Int
+  quiz          FermiQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  answers       Json
+  submittedAt   DateTime @default(now())
+
+  @@unique([participantId, quizId])
+  @@index([quizId])
+  @@map("fermi_responses")
 }

@@ -40,6 +40,13 @@ export const sessionsService = {
     return prisma.session.findMany({
       where: { eventId },
       orderBy: { startsAt: "asc" },
+      include: {
+        fermiQuiz: {
+          select: {
+            id: true,
+          },
+        },
+      },
     });
   },
 
