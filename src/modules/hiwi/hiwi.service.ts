@@ -111,4 +111,36 @@ export const hiwiService = {
 
     return true;
   },
+
+  async getMySessions(userId: number) {
+    const hiwi = await prisma.hiWi.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (!hiwi) {
+      throw new Error("HIWI_NOT_FOUND");
+    }
+
+    return prisma.hiWiSession.findMany({
+      where: { hiwiId: hiwi.id },
+      include: {
+        session: {
+          include: {
+            event: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        session: {
+          startsAt: "asc",
+        },
+      },
+    });
+  },
 };

@@ -50,4 +50,19 @@ export const hiwiController = {
 
     res.status(204).send();
   },
+
+  async getMySessions(req: Request, res: Response) {
+    try {
+      const auth = (req as any).auth;
+      const userId = auth.userId;
+
+      const sessions = await hiwiService.getMySessions(userId);
+
+      return res.json(sessions);
+    } catch (err: any) {
+      return res.status(400).json({
+        error: err.message ?? "FAILED_TO_GET_HIWI_SESSIONS",
+      });
+    }
+  },
 };

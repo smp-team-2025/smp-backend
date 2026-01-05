@@ -15,3 +15,6 @@ hiwiRouter.get("/:id", hiwiController.getById);   // GET /api/hiwis/:id  (id = h
 hiwiRouter.post("/", hiwiController.create);      // POST /api/hiwis
 hiwiRouter.patch("/:id", hiwiController.update);  // PATCH /api/hiwis/:id
 hiwiRouter.delete("/:id", hiwiController.remove); // DELETE /api/hiwis/:id
+
+// GET /api/hiwi/sessions
+hiwiRouter.get("/sessions", requireAuth, requireRole(UserRole.HIWI), hiwiController.getMySessions);
