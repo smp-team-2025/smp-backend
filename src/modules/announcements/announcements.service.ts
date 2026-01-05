@@ -8,6 +8,11 @@ type CreateInput = {
   sessionId?: number;
 };
 
+type UpdateAnnouncementInput = {
+  title?: string | null;
+  body?: string;
+};
+
 export const announcementsService = {
   async create(input: CreateInput) {
     if (!input.eventId && !input.sessionId) {
@@ -62,5 +67,21 @@ export const announcementsService = {
         mimeType: file.mimetype,
       },
     });
-  }
+  },
+
+  async updateAnnouncement(id: number, data: UpdateAnnouncementInput) {
+    return prisma.staffAnnouncement.update({
+      where: { id },
+      data: {
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.body !== undefined && { body: data.body }),
+      },
+    });
+  },
+
+  async deleteAnnouncement(id: number) {
+    await prisma.staffAnnouncement.delete({
+      where: { id },
+    });
+  },
 };

@@ -53,6 +53,33 @@ class AnnouncementsController {
       });
     }
   }
+
+  async update(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const { title, body } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ error: "INVALID_ID" });
+    }
+
+    const updated = await announcementsService.updateAnnouncement(id, {
+      title,
+      body,
+    });
+
+    return res.json(updated);
+  }
+
+  async remove(req: Request, res: Response) {
+    const id = Number(req.params.id);
+
+    if (!id) {
+      return res.status(400).json({ error: "INVALID_ID" });
+    }
+
+    await announcementsService.deleteAnnouncement(id);
+    return res.status(204).send();
+  }
 }
 
 export const announcementsController = new AnnouncementsController();

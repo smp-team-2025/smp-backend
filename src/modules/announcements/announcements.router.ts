@@ -30,3 +30,19 @@ announcementsRouter.post(
   upload.single("file"),
   announcementsController.uploadAttachment
 );
+
+// Update Announcement
+announcementsRouter.patch(
+  "/:id",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER, UserRole.HIWI),
+  announcementsController.update
+);
+
+// Delete Announcement
+announcementsRouter.delete(
+  "/:id",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER, UserRole.HIWI),
+  announcementsController.remove
+);
