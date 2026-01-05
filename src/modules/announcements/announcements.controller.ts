@@ -31,6 +31,28 @@ class AnnouncementsController {
 
     return res.json(announcements);
   }
+
+  async uploadAttachment(req: Request, res: Response) {
+    const announcementId = Number(req.params.id);
+    const file = req.file;
+
+    if (!file || !announcementId) {
+      return res.status(400).json({ error: "FILE_AND_ID_REQUIRED" });
+    }
+
+    try {
+      const attachment = await announcementsService.attachImage({
+        announcementId,
+        file,
+      });
+
+      return res.status(201).json(attachment);
+    } catch (err: any) {
+      return res.status(400).json({
+        error: err.message ?? "UPLOAD_FAILED",
+      });
+    }
+  }
 }
 
 export const announcementsController = new AnnouncementsController();

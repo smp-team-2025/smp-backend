@@ -186,9 +186,24 @@ model StaffAnnouncement {
 
   createdAt DateTime @default(now())
 
+  attachments AnnouncementAttachment[]
+
   @@index([eventId])
   @@index([sessionId])
   @@map("staff_announcements")
+}
+
+model AnnouncementAttachment {
+  id              Int      @id @default(autoincrement())
+  announcementId  Int
+  announcement    StaffAnnouncement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  url             String
+  mimeType        String
+  createdAt       DateTime @default(now())
+
+  @@index([announcementId])
+  @@map("announcement_attachments")
 }
 
 model ZoomUnmatchedParticipant {

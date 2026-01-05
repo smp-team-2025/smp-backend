@@ -40,4 +40,27 @@ export const announcementsService = {
       },
     });
   },
+
+  async attachImage(params: {
+    announcementId: number;
+    file: Express.Multer.File;
+  }) {
+    const { announcementId, file } = params;
+
+    const announcement = await prisma.staffAnnouncement.findUnique({
+      where: { id: announcementId },
+    });
+
+    if (!announcement) {
+      throw new Error("ANNOUNCEMENT_NOT_FOUND");
+    }
+
+    return prisma.announcementAttachment.create({
+      data: {
+        announcementId,
+        url: `/uploads/${file.filename}`,
+        mimeType: file.mimetype,
+      },
+    });
+  }
 };

@@ -10,6 +10,7 @@ import { usersRouter } from "./modules/users/users.router";
 import { attendanceRouter } from "./modules/attendance/attendance.router";
 import { announcementsRouter } from "./modules/announcements/announcements.router";
 import { quizzesRouter } from "./modules/quizzes/quizzes.router";
+import path from "path";
 
 
 
@@ -59,5 +60,13 @@ app.use("/api/users", usersRouter);
 
 //Attendance endpoint
 app.use("/api/attendance", attendanceRouter);
+
+//Announcements endpoint
 app.use("/api/announcements", announcementsRouter);
+app.use(
+  "/uploads",
+  express.static(path.join(process.cwd(), "uploads"))
+);
+
+//Fermi Quiz endpoint
 app.use("/api/quizzes", quizzesRouter);

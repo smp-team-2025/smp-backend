@@ -1,4 +1,9 @@
 import { app } from "./app";
+import fs from "fs";
+
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads");
+}
 
 const PORT = process.env.PORT || 3000;
 
