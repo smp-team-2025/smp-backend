@@ -15,6 +15,12 @@ enum AttendanceSource {
   ONLINE //Zoom
 }
 
+enum AnnouncementVisibility {
+  ORGA_ONLY
+  HIWI_ORGA
+  PUBLIC
+}
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -187,6 +193,8 @@ model StaffAnnouncement {
   createdAt DateTime @default(now())
 
   attachments AnnouncementAttachment[]
+
+  visibility AnnouncementVisibility @default(HIWI_ORGA)
 
   @@index([eventId])
   @@index([sessionId])

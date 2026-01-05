@@ -1,3 +1,4 @@
+import { AnnouncementVisibility, UserRole } from "@prisma/client";
 import { prisma } from "../../prisma";
 
 type CreateInput = {
@@ -11,31 +12,45 @@ type CreateInput = {
 type UpdateAnnouncementInput = {
   title?: string | null;
   body?: string;
+  visibility?: AnnouncementVisibility;
+
 };
 
 export const announcementsService = {
-  async create(input: CreateInput) {
-    if (!input.eventId && !input.sessionId) {
-      throw new Error("EVENT_OR_SESSION_REQUIRED");
-    }
-
+  async create(data: {
+    title?: string;
+    body: string;
+    eventId?: number;
+    sessionId?: number;
+    visibility?: AnnouncementVisibility;
+    authorId: number;
+  }) {
     return prisma.staffAnnouncement.create({
       data: {
-        title: input.title,
-        body: input.body,
-        authorId: input.authorId,
-        eventId: input.eventId,
-        sessionId: input.sessionId,
-      },
-      include: {
-        author: { select: { id: true, name: true, role: true } },
+        title: data.title,
+        body: data.body,
+        eventId: data.eventId,
+        sessionId: data.sessionId,
+        authorId: data.authorId,
+        visibility: data.visibility ?? AnnouncementVisibility.HIWI_ORGA, 
       },
     });
   },
 
-  async list(filter: { eventId?: number; sessionId?: number }) {
+  async list(
+    filter: { eventId?: number; sessionId?: number },
+    role: UserRole
+  ) {
+    const visibilityFilter =
+      role === UserRole.ORGANIZER
+        ? {}
+        : role === UserRole.HIWI
+        ? { visibility: { in: [AnnouncementVisibility.HIWI_ORGA, AnnouncementVisibility.PUBLIC] } }
+        : { visibility: AnnouncementVisibility.PUBLIC };
+
     return prisma.staffAnnouncement.findMany({
       where: {
+        ...visibilityFilter,
         ...(filter.eventId ? { eventId: filter.eventId } : {}),
         ...(filter.sessionId ? { sessionId: filter.sessionId } : {}),
       },
@@ -69,19 +84,64 @@ export const announcementsService = {
     });
   },
 
-  async updateAnnouncement(id: number, data: UpdateAnnouncementInput) {
+  async update(
+    id: number,
+    data: {
+      title?: string;
+      body?: string;
+      eventId?: number;
+      sessionId?: number;
+      visibility?: AnnouncementVisibility;
+    },
+    auth: { userId: number; role: UserRole }
+  ) {
+    const announcement = await prisma.staffAnnouncement.findUnique({
+      where: { id },
+    });
+
+    if (!announcement) {
+      throw new Error("ANNOUNCEMENT_NOT_FOUND");
+    }
+
+    // Organizer can edit anything
+    if (
+      auth.role !== UserRole.ORGANIZER &&
+      announcement.authorId !== auth.userId
+    ) {
+    throw new Error("FORBIDDEN");
+    }
+
     return prisma.staffAnnouncement.update({
       where: { id },
       data: {
-        ...(data.title !== undefined && { title: data.title }),
-        ...(data.body !== undefined && { body: data.body }),
+        title: data.title,
+        body: data.body,
+        eventId: data.eventId,
+        sessionId: data.sessionId,
+        ...(data.visibility !== undefined && { visibility: data.visibility }),
       },
     });
   },
 
-  async deleteAnnouncement(id: number) {
-    await prisma.staffAnnouncement.delete({
+  async deleteAnnouncement(
+    id: number,
+    auth: { userId: number; role: UserRole }
+  ) {
+    const announcement = await prisma.staffAnnouncement.findUnique({
       where: { id },
     });
+
+    if (!announcement) {
+      throw new Error("ANNOUNCEMENT_NOT_FOUND");
+    }
+
+    if (
+      auth.role !== UserRole.ORGANIZER &&
+      announcement.authorId !== auth.userId
+    ) {
+      throw new Error("FORBIDDEN");
+    }
+
+    await prisma.staffAnnouncement.delete({ where: { id } });
   },
 };

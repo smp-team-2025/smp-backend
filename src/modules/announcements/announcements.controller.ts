@@ -4,7 +4,7 @@ import { announcementsService } from "./announcements.service";
 class AnnouncementsController {
   async create(req: Request, res: Response) {
     const auth = (req as any).auth;
-    const { title, body, eventId, sessionId } = req.body;
+    const { title, body, eventId, sessionId, visibility } = req.body;
 
     if (!body) {
       return res.status(400).json({ error: "BODY_REQUIRED" });
@@ -13,23 +13,26 @@ class AnnouncementsController {
     const announcement = await announcementsService.create({
       title,
       body,
-      authorId: auth.userId,
       eventId,
       sessionId,
+      visibility,
+      authorId: auth.userId,
     });
 
     return res.status(201).json(announcement);
   }
 
   async list(req: Request, res: Response) {
-    const { eventId, sessionId } = req.query;
+    const role = (req as any).auth.role;
+    const eventId = req.query.eventId ? Number(req.query.eventId) : undefined;
+    const sessionId = req.query.sessionId ? Number(req.query.sessionId) : undefined;
 
-    const announcements = await announcementsService.list({
-      eventId: eventId ? Number(eventId) : undefined,
-      sessionId: sessionId ? Number(sessionId) : undefined,
-    });
+    const data = await announcementsService.list(
+      { eventId, sessionId },
+     role
+    );
 
-    return res.json(announcements);
+    res.json(data);
   }
 
   async uploadAttachment(req: Request, res: Response) {
@@ -56,28 +59,40 @@ class AnnouncementsController {
 
   async update(req: Request, res: Response) {
     const id = Number(req.params.id);
-    const { title, body } = req.body;
+    const auth = (req as any).auth;
 
     if (!id) {
       return res.status(400).json({ error: "INVALID_ID" });
     }
 
-    const updated = await announcementsService.updateAnnouncement(id, {
+    const {
       title,
       body,
-    });
+      eventId,
+      sessionId,
+      visibility,
+    } = req.body;
+
+    const updated = await announcementsService.update(id, {
+      title,
+      body,
+      eventId,
+      sessionId,
+      visibility,
+    }, auth);
 
     return res.json(updated);
   }
 
   async remove(req: Request, res: Response) {
     const id = Number(req.params.id);
+    const auth = (req as any).auth;
 
     if (!id) {
       return res.status(400).json({ error: "INVALID_ID" });
     }
 
-    await announcementsService.deleteAnnouncement(id);
+    await announcementsService.deleteAnnouncement(id, auth);
     return res.status(204).send();
   }
 }

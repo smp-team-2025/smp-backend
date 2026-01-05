@@ -14,15 +14,14 @@ announcementsRouter.post(
   announcementsController.create
 );
 
-// List (HIWI + ORGANIZER)
+// List
 announcementsRouter.get(
   "/",
   requireAuth,
-  requireRole(UserRole.ORGANIZER, UserRole.HIWI),
   announcementsController.list
 );
 
-// Add Announcement
+// Add Attachment
 announcementsRouter.post(
   "/:id/attachments",
   requireAuth,
