@@ -46,7 +46,9 @@ model User {
   attendances         Attendance[]
 
   staffAnnouncements StaffAnnouncement[]
-  fermiResponses     FermiResponse[]
+  comments           AnnouncementComment[]
+
+  fermiResponses FermiResponse[]
 }
 
 model Registration {
@@ -112,8 +114,8 @@ model Session {
 
   hiwis HiWiSession[]
 
-  attendances        Attendance[]
-  
+  attendances Attendance[]
+
   staffAnnouncements StaffAnnouncement[]
   fermiQuiz          FermiQuiz?
 
@@ -163,12 +165,12 @@ model Attendance {
 
   scannedAt DateTime @default(now())
 
-  source           AttendanceSource @default(ONSITE)
-  zoomDisplayName  String?
-  zoomEmail        String?
-  zoomJoinTime     DateTime?
-  zoomLeaveTime    DateTime?
-  zoomDurationMin  Int?
+  source          AttendanceSource @default(ONSITE)
+  zoomDisplayName String?
+  zoomEmail       String?
+  zoomJoinTime    DateTime?
+  zoomLeaveTime   DateTime?
+  zoomDurationMin Int?
 
   @@unique([participantId, sessionId])
   @@index([sessionId])
@@ -196,35 +198,54 @@ model StaffAnnouncement {
 
   visibility AnnouncementVisibility @default(HIWI_ORGA)
 
+  comments AnnouncementComment[]
+
   @@index([eventId])
   @@index([sessionId])
   @@map("staff_announcements")
 }
 
 model AnnouncementAttachment {
-  id              Int      @id @default(autoincrement())
-  announcementId  Int
-  announcement    StaffAnnouncement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  id             Int               @id @default(autoincrement())
+  announcementId Int
+  announcement   StaffAnnouncement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
 
-  url             String
-  mimeType        String
-  createdAt       DateTime @default(now())
+  url       String
+  mimeType  String
+  createdAt DateTime @default(now())
 
   @@index([announcementId])
   @@map("announcement_attachments")
 }
 
-model ZoomUnmatchedParticipant {
-  id          Int @id @default(autoincrement())
+model AnnouncementComment {
+  id Int @id @default(autoincrement())
 
-  sessionId   Int
-  session     Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  announcementId Int
+  announcement   StaffAnnouncement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  authorId Int
+  author   User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([announcementId])
+  @@index([authorId])
+  @@map("announcement_comments")
+}
+
+model ZoomUnmatchedParticipant {
+  id Int @id @default(autoincrement())
+
+  sessionId Int
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   displayName String
   email       String?
   durationMin Int?
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([sessionId])
   @@map("zoom_unmatched_participants")
@@ -254,9 +275,9 @@ model FermiQuiz {
 }
 
 model FermiQuizQuestion {
-  id         Int      @id @default(autoincrement())
+  id         Int           @id @default(autoincrement())
   quizId     Int
-  quiz       FermiQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quiz       FermiQuiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
   questionId Int
   question   FermiQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
   order      Int
@@ -268,13 +289,13 @@ model FermiQuizQuestion {
 }
 
 model FermiResponse {
-  id            Int      @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   participantId Int
-  participant   User     @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  participant   User      @relation(fields: [participantId], references: [id], onDelete: Cascade)
   quizId        Int
   quiz          FermiQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
   answers       Json
-  submittedAt   DateTime @default(now())
+  submittedAt   DateTime  @default(now())
 
   @@unique([participantId, quizId])
   @@index([quizId])

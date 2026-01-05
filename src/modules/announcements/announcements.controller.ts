@@ -95,6 +95,57 @@ class AnnouncementsController {
     await announcementsService.deleteAnnouncement(id, auth);
     return res.status(204).send();
   }
+
+  async listComments(req: Request, res: Response) {
+    const announcementId = Number(req.params.id);
+    const comments = await announcementsService.listComments(announcementId);
+    res.json(comments);
+  }
+
+  async createComment(req: Request, res: Response) {
+    const announcementId = Number(req.params.id);
+    const { body } = req.body;
+    const auth = (req as any).auth;
+
+    if (!body) {
+      return res.status(400).json({ error: "BODY_REQUIRED" });
+    }
+
+    const comment = await announcementsService.createComment({
+      announcementId,
+      body,
+      authorId: auth.userId,
+    });
+
+    res.status(201).json(comment);
+  }
+
+  async updateComment(req: Request, res: Response) {
+    const commentId = Number(req.params.commentId);
+    const { body } = req.body;
+    const auth = (req as any).auth;
+
+    if (!body) {
+      return res.status(400).json({ error: "BODY_REQUIRED" });
+    }
+
+    const updated = await announcementsService.updateComment(
+      commentId,
+      body,
+      auth
+    );
+
+    res.json(updated);
+  }
+
+  async deleteComment(req: Request, res: Response) {
+  const commentId = Number(req.params.commentId);
+  const auth = (req as any).auth;
+
+  await announcementsService.deleteComment(commentId, auth);
+
+  return res.status(204).send();
+}
 }
 
 export const announcementsController = new AnnouncementsController();

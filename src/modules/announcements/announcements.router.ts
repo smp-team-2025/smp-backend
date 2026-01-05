@@ -45,3 +45,32 @@ announcementsRouter.delete(
   requireRole(UserRole.ORGANIZER, UserRole.HIWI),
   announcementsController.remove
 );
+
+// Comments
+announcementsRouter.get(
+  "/:id/comments",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER, UserRole.HIWI),
+  announcementsController.listComments
+);
+
+announcementsRouter.post(
+  "/:id/comments",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER, UserRole.HIWI),
+  announcementsController.createComment
+);
+
+announcementsRouter.patch(
+  "/comments/:commentId",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER, UserRole.HIWI),
+  announcementsController.updateComment
+);
+
+announcementsRouter.delete(
+  "/comments/:commentId",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER, UserRole.HIWI),
+  announcementsController.deleteComment
+);

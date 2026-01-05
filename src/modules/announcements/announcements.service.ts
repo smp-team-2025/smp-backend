@@ -144,4 +144,82 @@ export const announcementsService = {
 
     await prisma.staffAnnouncement.delete({ where: { id } });
   },
+
+  async listComments(announcementId: number) {
+    return prisma.announcementComment.findMany({
+      where: { announcementId },
+      orderBy: { createdAt: "asc" },
+      include: {
+        author: {
+          select: { id: true, name: true, role: true },
+        },
+      },
+    });
+  },
+
+  async createComment(data: {
+    announcementId: number;
+    body: string;
+    authorId: number;
+  }) {
+    return prisma.announcementComment.create({
+      data,
+      include: {
+        author: {
+          select: { id: true, name: true, role: true },
+        },
+      },
+    });
+  },
+
+  async updateComment(
+    commentId: number,
+    body: string,
+    auth: { userId: number; role: UserRole }
+  ) {
+    const comment = await prisma.announcementComment.findUnique({
+      where: { id: commentId },
+    });
+
+    if (!comment) {
+      throw new Error("COMMENT_NOT_FOUND");
+    }
+
+    if (
+      auth.role !== UserRole.ORGANIZER &&
+      comment.authorId !== auth.userId
+    ) {
+      throw new Error("FORBIDDEN");
+    }
+
+    return prisma.announcementComment.update({
+      where: { id: commentId },
+      data: { body },
+    });
+  },
+
+  async deleteComment(
+    commentId: number,
+    auth: { userId: number; role: UserRole }
+  ) {
+    const comment = await prisma.announcementComment.findUnique({
+      where: { id: commentId },
+    });
+
+    if (!comment) {
+      throw new Error("COMMENT_NOT_FOUND");
+    }
+
+    // Organizer can delete anything
+    if (
+      auth.role !== UserRole.ORGANIZER &&
+      comment.authorId !== auth.userId
+    ) {
+      throw new Error("FORBIDDEN");
+    }
+
+    await prisma.announcementComment.delete({
+      where: { id: commentId },
+    });
+  }
 };
