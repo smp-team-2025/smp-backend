@@ -10,6 +10,7 @@ import { usersRouter } from "./modules/users/users.router";
 import { attendanceRouter } from "./modules/attendance/attendance.router";
 import { announcementsRouter } from "./modules/announcements/announcements.router";
 import { quizzesRouter } from "./modules/quizzes/quizzes.router";
+import { diplomasRouter } from "./modules/diplomas/diplomas.router";
 import path from "path";
 
 
@@ -70,3 +71,6 @@ app.use(
 
 //Fermi Quiz endpoint
 app.use("/api/quizzes", quizzesRouter);
+
+// Diplomas endpoint
+app.use("/api/diplomas", diplomasRouter);
