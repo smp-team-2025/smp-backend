@@ -49,6 +49,8 @@ model User {
   comments           AnnouncementComment[]
 
   fermiResponses FermiResponse[]
+
+  diplomas         Diploma[]
 }
 
 model Registration {
@@ -92,6 +94,8 @@ model Event {
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   staffAnnouncements StaffAnnouncement[]
+
+  diplomas         Diploma[]
 
   @@map("events")
 }
@@ -300,4 +304,23 @@ model FermiResponse {
   @@unique([participantId, quizId])
   @@index([quizId])
   @@map("fermi_responses")
+}
+
+model Diploma {
+  id                Int      @id @default(autoincrement())
+  
+  participantId     Int
+  participant       User     @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  
+  eventId           Int
+  event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  certificateNumber String   @unique
+  issuedAt          DateTime @default(now())
+  createdAt         DateTime @default(now())
+  
+  @@unique([participantId, eventId])
+  @@index([eventId])
+  @@index([participantId])
+  @@map("diplomas")
 }
