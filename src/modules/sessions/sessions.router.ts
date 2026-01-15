@@ -5,8 +5,10 @@ import { UserRole } from "@prisma/client";
 
 export const sessionsRouter = Router({ mergeParams: true });
 
-// Organizer-only
-sessionsRouter.get("/", requireAuth, requireRole(UserRole.ORGANIZER), sessionsController.list);
+// Sessions list - accessible by all authenticated users (for quiz, calendar, etc)
+sessionsRouter.get("/", requireAuth, sessionsController.list);
+
+// Organizer-only routes
 sessionsRouter.post("/", requireAuth, requireRole(UserRole.ORGANIZER), sessionsController.create);
 
 sessionsRouter.get("/:sessionId", requireAuth, requireRole(UserRole.ORGANIZER), sessionsController.getById);
