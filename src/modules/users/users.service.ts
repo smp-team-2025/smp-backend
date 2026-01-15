@@ -110,7 +110,7 @@ export const usersService = {
 
     // Layout
     // Left upper sidet: SMP + name + school
-    doc.fontSize(12).text("SMP", padding, padding);
+    doc.fontSize(12).text("SMP 2026", padding, padding);
 
     doc.fontSize(11).text(user.name, padding, padding + mm(8), {
       width: width - padding * 2 - qrSize - mm(2),
