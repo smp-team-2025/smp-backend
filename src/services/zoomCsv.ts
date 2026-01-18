@@ -9,6 +9,8 @@ export type ZoomCsvRow = {
   durationMin?: number;
 };
 
+
+
 export async function parseZoomCsv(filePath: string): Promise<ZoomCsvRow[]> {
   return new Promise((resolve, reject) => {
     const rows: ZoomCsvRow[] = [];
@@ -16,12 +18,44 @@ export async function parseZoomCsv(filePath: string): Promise<ZoomCsvRow[]> {
     fs.createReadStream(filePath)
       .pipe(csv())
       .on("data", (row) => {
+        const name =
+          row["Name (ursprünglicher Name)"] ||
+          row["Name (Original Name)"] ||
+          row["User Name"] ||
+          row["Name"] ||
+          "";
+
+        if (!name || !name.trim()) {
+          return;
+        }
+
+        const email =
+          row["E-Mail"] ||
+          row["E-mail"] ||
+          row["Email"] ||
+          undefined;
+
+        const joinTime =
+          row["Beitrittszeit"] ||
+          row["Join Time"] ||
+          undefined;
+
+        const leaveTime =
+          row["Austrittszeit"] ||
+          row["Leave Time"] ||
+          undefined;
+
+        const durationMinRaw =
+          row["Dauer (Minuten)"] ||
+          row["Duration (Minutes)"] ||
+          undefined;
+
         rows.push({
-          name: row["Name (Original Name)"] || row["User Name"],
-          email: row["E-mail"] || undefined,
-          joinTime: row["Join Time"],
-          leaveTime: row["Leave Time"],
-          durationMin: Number(row["Duration (Minutes)"]) || undefined,
+          name: name.trim(),
+          email,
+          joinTime,
+          leaveTime,
+          durationMin: durationMinRaw ? Number(durationMinRaw) : undefined,
         });
       })
       .on("end", () => resolve(rows))

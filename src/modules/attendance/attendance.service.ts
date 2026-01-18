@@ -210,7 +210,6 @@ class AttendanceService {
         create: {
           participantId: user.id,
           sessionId,
-         scannedAt: new Date(row.joinTime ?? Date.now()),
        },
         update: {},
      });
@@ -224,9 +223,6 @@ class AttendanceService {
           sessionId,
           displayName: u.name,
           email: u.email ?? null,
-          joinTime: u.joinTime ? new Date(u.joinTime) : null,
-          leaveTime: u.leaveTime ? new Date(u.leaveTime) : null,
-          durationMin: u.durationMin ?? null,
         })),
       });
     }
