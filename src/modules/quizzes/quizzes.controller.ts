@@ -155,4 +155,36 @@ export const quizzesController = {
       return res.status(500).json({ error: "Internal server error" });
     }
   },
+
+  async deleteQuiz(req: AuthRequest, res: Response) {
+    try {
+      const id = parseInt(req.params.id);
+      await quizzesService.deleteQuiz(id);
+      return res.status(204).send();
+    } catch (error) {
+      console.error("Delete quiz error:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  },
+
+  async updateQuiz(req: AuthRequest, res: Response) {
+    try {
+      const id = parseInt(req.params.id);
+      const { questionIds } = req.body;
+
+      if (!questionIds || !Array.isArray(questionIds)) {
+        return res.status(400).json({ error: "questionIds array required" });
+      }
+
+      if (questionIds.length !== 10) {
+        return res.status(400).json({ error: "Exactly 10 questions required" });
+      }
+
+      const quiz = await quizzesService.updateQuiz(id, questionIds);
+      return res.json(quiz);
+    } catch (error) {
+      console.error("Update quiz error:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  },
 };

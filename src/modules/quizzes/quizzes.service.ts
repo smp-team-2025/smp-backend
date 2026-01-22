@@ -221,4 +221,38 @@ export const quizzesService = {
 
     return stats;
   },
+
+  async deleteQuiz(quizId: number) {
+    await prisma.fermiQuiz.delete({
+      where: { id: quizId },
+    });
+  },
+
+  async updateQuiz(quizId: number, questionIds: number[]) {
+    await prisma.fermiQuizQuestion.deleteMany({
+      where: { quizId },
+    });
+
+    await prisma.fermiQuizQuestion.createMany({
+      data: questionIds.map((qId, idx) => ({
+        quizId,
+        questionId: qId,
+        order: idx + 1,
+      })),
+    });
+
+    return await prisma.fermiQuiz.findUnique({
+      where: { id: quizId },
+      include: {
+        questions: {
+          include: {
+            question: true,
+          },
+          orderBy: {
+            order: "asc",
+          },
+        },
+      },
+    });
+  },
 };

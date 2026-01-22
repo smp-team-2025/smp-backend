@@ -67,4 +67,18 @@ quizzesRouter.get(
   quizzesController.getStatistics
 );
 
+quizzesRouter.delete(
+  "/:id",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER),
+  quizzesController.deleteQuiz
+);
+
+quizzesRouter.put(
+  "/:id",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER),
+  quizzesController.updateQuiz
+);
+
 export default quizzesRouter;
