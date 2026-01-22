@@ -57,6 +57,14 @@ export const announcementsService = {
       orderBy: { createdAt: "desc" },
       include: {
         author: { select: { id: true, name: true, role: true } },
+        attachments: {
+        select: {
+          id: true,
+          url: true,
+          mimeType: true,
+        },
+        orderBy: { id: "asc" },
+      },
       },
     });
   },
