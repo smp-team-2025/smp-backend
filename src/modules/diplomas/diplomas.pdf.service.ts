@@ -50,7 +50,7 @@ export const diplomaPdfService = {
       .fontSize(40)
       .font("Helvetica-Bold")
       .fillColor("#1e40af")
-      .text("Urkunde", 50, 90, {
+      .text("Teilnahmezertifikat", 50, 90, {
         width: 742,
         align: "center",
       });
@@ -60,7 +60,7 @@ export const diplomaPdfService = {
       .fontSize(20)
       .font("Helvetica")
       .fillColor("#000000")
-      .text("Schüler-Masterclass Physik", 50, 150, {
+      .text("Saturday Morning Physics", 50, 150, {
         width: 742,
         align: "center",
       });
@@ -80,7 +80,7 @@ export const diplomaPdfService = {
       .fontSize(16)
       .font("Helvetica")
       .fillColor("#000000")
-      .text("Diese Urkunde wird verliehen an", 50, 230, {
+      .text("Dieses Zertifikat wird verliehen an", 50, 230, {
         width: 742,
         align: "center",
       });
@@ -110,7 +110,7 @@ export const diplomaPdfService = {
       .fontSize(14)
       .font("Helvetica")
       .text(
-        "für die erfolgreiche Teilnahme an der Schüler-Masterclass Physik.",
+        "für die erfolgreiche Teilnahme am Programm Saturday Morning Physics.",
         50,
         360,
         {
@@ -123,7 +123,7 @@ export const diplomaPdfService = {
     doc
       .fontSize(12)
       .text(
-        `Mit ${eligibility.attendanceCount} besuchten Veranstaltungen und der erfolgreichen`,
+        `einschließlich der Teilnahme an den Programmsitzungen`,
         50,
         390,
         {
@@ -132,7 +132,7 @@ export const diplomaPdfService = {
         }
       );
 
-    doc.text("Teilnahme am Fermi-Quiz.", 50, 410, {
+    doc.text("sowie der erfolgreichen Bearbeitung des Fermi-Quiz.", 50, 410, {
       width: 742,
       align: "center",
     });
