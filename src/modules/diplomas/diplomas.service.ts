@@ -1,7 +1,7 @@
 import { prisma } from "../../prisma";
 import { UserRole } from "@prisma/client";
 
-const MINIMUM_ATTENDANCE_COUNT = 3; //Can be changed accordingly to the attendance criteria
+const MINIMUM_ATTENDANCE_COUNT = 3;
 
 type EligibilityResult = {
   isEligible: boolean;
@@ -26,7 +26,6 @@ async function generateCertificateNumber(eventId: number): Promise<string> {
     ? new Date(event.startDate).getFullYear()
     : new Date().getFullYear();
 
-  // Get the count of diplomas for this event
   const count = await prisma.diploma.count({
     where: { eventId },
   });
@@ -36,15 +35,10 @@ async function generateCertificateNumber(eventId: number): Promise<string> {
 }
 
 export const diplomaService = {
-  /**
-   * Check eligibility for a participant in a specific event
-   * Calculated on-demand from real data
-   */
   async checkEligibility(
     participantId: number,
     eventId: number
   ): Promise<EligibilityResult> {
-    // Verify participant exists
     const participant = await prisma.user.findUnique({
       where: { id: participantId },
     });
@@ -53,7 +47,6 @@ export const diplomaService = {
       throw new Error("INVALID_PARTICIPANT");
     }
 
-    // Verify event exists
     const event = await prisma.event.findUnique({
       where: { id: eventId },
     });
@@ -62,7 +55,6 @@ export const diplomaService = {
       throw new Error("EVENT_NOT_FOUND");
     }
 
-    // Get all sessions for this event
     const sessions = await prisma.session.findMany({
       where: { eventId },
       select: { id: true },
@@ -70,7 +62,6 @@ export const diplomaService = {
 
     const sessionIds = sessions.map((s) => s.id);
 
-    // Count attendances for this participant in this event
     const attendanceCount = await prisma.attendance.count({
       where: {
         participantId,
@@ -78,7 +69,6 @@ export const diplomaService = {
       },
     });
 
-    // Check if quiz was submitted for any session in this event
     const quizSubmitted =
       (await prisma.fermiResponse.count({
         where: {
@@ -91,7 +81,6 @@ export const diplomaService = {
         },
       })) > 0;
 
-    // Determine eligibility
     const reasons: string[] = [];
     const isEligible =
       attendanceCount >= MINIMUM_ATTENDANCE_COUNT && quizSubmitted;
@@ -114,19 +103,13 @@ export const diplomaService = {
     };
   },
 
-  /**
-   * Issue a diploma for a participant
-   * Creates the diploma record with unique certificate number
-   */
   async issueDiploma(participantId: number, eventId: number) {
-    // Check eligibility first
     const eligibility = await this.checkEligibility(participantId, eventId);
 
     if (!eligibility.isEligible) {
       throw new Error("PARTICIPANT_NOT_ELIGIBLE");
     }
 
-    // Check if diploma already issued
     const existing = await prisma.diploma.findUnique({
       where: {
         participantId_eventId: {
@@ -140,10 +123,8 @@ export const diplomaService = {
       throw new Error("DIPLOMA_ALREADY_ISSUED");
     }
 
-    // Generate unique certificate number
     const certificateNumber = await generateCertificateNumber(eventId);
 
-    // Create diploma
     const diploma = await prisma.diploma.create({
       data: {
         participantId,
@@ -175,9 +156,6 @@ export const diplomaService = {
     return diploma;
   },
 
-  /**
-   * Get diploma for a participant in an event
-   */
   async getDiploma(participantId: number, eventId: number) {
     return prisma.diploma.findUnique({
       where: {
@@ -209,9 +187,6 @@ export const diplomaService = {
     });
   },
 
-  /**
-   * Get diploma by certificate number
-   */
   async getDiplomaByCertificateNumber(certificateNumber: string) {
     return prisma.diploma.findUnique({
       where: { certificateNumber },
@@ -238,11 +213,7 @@ export const diplomaService = {
     });
   },
 
-  /**
-   * List all eligible participants for an event
-   */
   async listEligibleParticipants(eventId: number) {
-    // Get all participants who attended sessions in this event
     const participants = await prisma.user.findMany({
       where: {
         role: UserRole.PARTICIPANT,
@@ -264,7 +235,6 @@ export const diplomaService = {
       },
     });
 
-    // Check eligibility for each
     const eligibilityChecks = await Promise.all(
       participants.map(async (p) => {
         const eligibility = await this.checkEligibility(p.id, eventId);
@@ -282,9 +252,6 @@ export const diplomaService = {
     return eligibilityChecks.filter((c) => c.eligibility.isEligible);
   },
 
-  /**
-   * List all issued diplomas for an event
-   */
   async listIssuedDiplomas(eventId: number) {
     return prisma.diploma.findMany({
       where: { eventId },
@@ -299,18 +266,6 @@ export const diplomaService = {
             },
           },
         },
-      },
-      orderBy: { issuedAt: "desc" },
-    });
-  },
-
-  /**
-   * Get all diplomas for a participant (across all events)
-   */
-  async getParticipantDiplomas(participantId: number) {
-    return prisma.diploma.findMany({
-      where: { participantId },
-      include: {
         event: {
           select: {
             id: true,
@@ -324,9 +279,30 @@ export const diplomaService = {
     });
   },
 
-  /**
-   * Delete a diploma (revoke)
-   */
+  async getParticipantDiplomas(participantId: number) {
+    return prisma.diploma.findMany({
+      where: { participantId },
+      include: {
+        event: {
+          select: {
+            id: true,
+            title: true,
+            startDate: true,
+            endDate: true,
+          },
+        },
+        participant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { issuedAt: "desc" },
+    });
+  },
+
   async deleteDiploma(participantId: number, eventId: number) {
     const diploma = await this.getDiploma(participantId, eventId);
 
@@ -346,9 +322,6 @@ export const diplomaService = {
     return true;
   },
 
-  /**
-   * Get diploma statistics for an event
-   */
   async getEventStatistics(eventId: number) {
     const [totalParticipants, issuedDiplomas, eligibleParticipants] =
       await Promise.all([
