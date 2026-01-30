@@ -81,4 +81,10 @@ quizzesRouter.put(
   quizzesController.updateQuiz
 );
 
+quizzesRouter.get(
+  "/:id/leaderboard",
+  requireAuth,
+  quizzesController.getLeaderboard
+);
+
 export default quizzesRouter;
