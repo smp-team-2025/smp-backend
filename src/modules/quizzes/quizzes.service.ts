@@ -255,4 +255,92 @@ export const quizzesService = {
       },
     });
   },
+
+  async getLeaderboard(quizId: number) {
+    const quiz = await prisma.fermiQuiz.findUnique({
+      where: { id: quizId },
+      include: {
+        questions: {
+          include: {
+            question: true,
+          },
+          orderBy: {
+            order: "asc",
+          },
+        },
+        responses: {
+          include: {
+            participant: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!quiz) {
+      throw new Error("QUIZ_NOT_FOUND");
+    }
+
+    // Calculate score for each participant
+    const leaderboard = quiz.responses.map((response: any) => {
+      const answers = response.answers as Array<{ questionId: number; answer: number }>;
+
+      let totalScore = 0;
+      const questionScores: Array<{ questionId: number; answer: number | null; score: number }> = [];
+
+      quiz.questions.forEach((q) => {
+        const studentAnswer = answers.find((a: any) => a.questionId === q.questionId)?.answer;
+
+        if (studentAnswer === undefined || studentAnswer === null) {
+          // No answer = maximum penalty (8 points)
+          questionScores.push({ questionId: q.questionId, answer: null, score: 8 });
+          totalScore += 8;
+          return;
+        }
+
+        // Calculate score: |student - correct| using minimum if two correct answers
+        let score = 0;
+        if (q.question.correctAnswer !== null && q.question.correctAnswer !== undefined) {
+          score = Math.abs(studentAnswer - q.question.correctAnswer);
+
+          // If there's a second correct answer, use the minimum
+          if (q.question.correctAnswer2 !== null && q.question.correctAnswer2 !== undefined) {
+            const score2 = Math.abs(studentAnswer - q.question.correctAnswer2);
+            score = Math.min(score, score2);
+          }
+        }
+
+        // Cap at 8 points maximum
+        score = Math.min(score, 8);
+
+        questionScores.push({ questionId: q.questionId, answer: studentAnswer, score });
+        totalScore += score;
+      });
+
+      return {
+        participantId: response.participant.id,
+        participantName: response.participant.name,
+        participantEmail: response.participant.email,
+        totalScore,
+        questionScores,
+        submittedAt: response.submittedAt,
+      };
+    });
+
+    // Sort by total score (lower is better)
+    leaderboard.sort((a, b) => a.totalScore - b.totalScore);
+
+    // Add rank
+    const rankedLeaderboard = leaderboard.map((entry, index) => ({
+      ...entry,
+      rank: index + 1,
+    }));
+
+    return rankedLeaderboard;
+  },
 };
