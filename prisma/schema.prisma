@@ -256,11 +256,10 @@ model ZoomUnmatchedParticipant {
 }
 
 model FermiQuestion {
-  id              Int      @id @default(autoincrement())
-  text            String   @db.Text
-  correctAnswer   Int?
-  correctAnswer2  Int?
-  createdAt       DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  text          String   @db.Text
+  correctAnswer Float?
+  createdAt     DateTime @default(now())
 
   quizQuestions FermiQuizQuestion[]
 

@@ -15,13 +15,13 @@ export const quizzesController = {
 
   async createQuestion(req: AuthRequest, res: Response) {
     try {
-      const { text, correctAnswer, correctAnswer2 } = req.body;
+      const { text, correctAnswer } = req.body;
 
       if (!text || typeof text !== "string") {
         return res.status(400).json({ error: "Question text required" });
       }
 
-      const question = await quizzesService.createQuestion(text, correctAnswer, correctAnswer2);
+      const question = await quizzesService.createQuestion(text, correctAnswer);
       return res.status(201).json(question);
     } catch (error) {
       console.error("Create question error:", error);
@@ -32,13 +32,13 @@ export const quizzesController = {
   async updateQuestion(req: AuthRequest, res: Response) {
     try {
       const id = parseInt(req.params.id);
-      const { text, correctAnswer, correctAnswer2 } = req.body;
+      const { text, correctAnswer } = req.body;
 
       if (!text || typeof text !== "string") {
         return res.status(400).json({ error: "Question text required" });
       }
 
-      const question = await quizzesService.updateQuestion(id, text, correctAnswer, correctAnswer2);
+      const question = await quizzesService.updateQuestion(id, text, correctAnswer);
       return res.json(question);
     } catch (error) {
       console.error("Update question error:", error);
@@ -184,20 +184,6 @@ export const quizzesController = {
       return res.json(quiz);
     } catch (error) {
       console.error("Update quiz error:", error);
-      return res.status(500).json({ error: "Internal server error" });
-    }
-  },
-
-  async getLeaderboard(req: Request, res: Response) {
-    try {
-      const quizId = parseInt(req.params.id);
-      const leaderboard = await quizzesService.getLeaderboard(quizId);
-      return res.json(leaderboard);
-    } catch (error: any) {
-      console.error("Get leaderboard error:", error);
-      if (error.message === "QUIZ_NOT_FOUND") {
-        return res.status(404).json({ error: "Quiz not found" });
-      }
       return res.status(500).json({ error: "Internal server error" });
     }
   },
