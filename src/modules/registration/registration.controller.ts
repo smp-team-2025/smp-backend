@@ -1,7 +1,19 @@
-import { Request, Response } from "express";
+import { Request, response, Response } from "express";
 import { registrationService } from "./registration.service";
 
 export const registrationController = {
+  //Approve all pending registations
+  async approveAllPending(req: Request, res: Response) {
+    try {
+      const result = await registrationService.approveAllPendingRegistrations();
+      return res.json({approvedCount: result,});
+    } catch (err: any) {
+      console.error("Error approving all pending registrations: ", err);
+      return res.status(500).json({error: "Internal server error"});
+    }
+  },
+
+
   // Issue #32: Get all registrations
   async getAll(_req: Request, res: Response) {
     try {

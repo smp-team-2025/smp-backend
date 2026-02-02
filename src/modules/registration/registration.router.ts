@@ -12,6 +12,7 @@ registrationRouter.get("/", requireAuth, requireRole(UserRole.ORGANIZER), regist
 registrationRouter.get("/:id", requireAuth, requireRole(UserRole.ORGANIZER), registrationController.getById);
 registrationRouter.post("/:id/approve", requireAuth, requireRole(UserRole.ORGANIZER), registrationController.approve);
 registrationRouter.post("/:id/reject", requireAuth, requireRole(UserRole.ORGANIZER), registrationController.reject);
+registrationRouter.post("/approve-all", requireAuth, requireRole(UserRole.ORGANIZER), registrationController.approveAllPending);
 
 // Public Registrations (students)
 registrationRouter.post("/", registrationController.create);

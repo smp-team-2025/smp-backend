@@ -22,6 +22,14 @@ export type RegistrationInput = {
 };
 
 export const registrationService = {
+  async approveAllPendingRegistrations() {
+    const result = await prisma.registration.updateMany({
+      where: {status: "PENDING"},
+      data: {status: "APPROVED"},
+    });
+    return result.count;
+  },
+
   async getAllRegistrations() {
     const registrations = await prisma.registration.findMany({
       orderBy: { createdAt: "desc" },
