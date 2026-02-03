@@ -66,7 +66,7 @@ export const registrationService = {
 
     const user = await prisma.user.create({
       data: {
-        name: `${registration.firstName} ${registration.lastName}`,
+        name: `${registration.firstName} ${registration.lastName}`.trim(),
         email: registration.email,
         passwordHash: passwordHash,
         role: UserRole.PARTICIPANT,

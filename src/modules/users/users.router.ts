@@ -16,3 +16,8 @@ usersRouter.get(
   requireAuth,
   usersController.getBusinessCardPdf
 );
+
+// GET /api/details
+usersRouter.get("/details", requireAuth, usersController.details);
+// PATCH /api/details
+usersRouter.patch("/details", requireAuth, usersController.update);

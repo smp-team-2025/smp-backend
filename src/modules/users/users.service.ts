@@ -1,8 +1,116 @@
 import QRCode from "qrcode";
 import PDFDocument from "pdfkit";
 import { prisma } from "../../prisma";
+import { UserRole } from "@prisma/client";
+
+export type updateInput = {
+  salutation: string,
+  firstName: string,
+  lastName: string,
+  street: string,
+  addressExtra?: string,
+  zipCode: string,
+  city: string,
+}
 
 export const usersService = {
+  //Only for participants
+  async updateDetails(userId:number, data: updateInput) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        role: true,
+        registrationId: true,
+      },
+    });
+
+    if (!user) {
+      const err: any = new Error("USER_NOT_FOUND");
+      err.status = 404;
+      throw err;
+    }
+
+    if (user.role !== UserRole.PARTICIPANT) {
+      const err: any = new Error("FORBIDDEN");
+      err.status = 403;
+      throw err;
+    }
+
+    if (!user.registrationId) {
+      const err: any = new Error("REGISTRATION_NOT_LINKED");
+      err.status = 404;
+      throw err;
+    }
+
+    //Prisma registration update + user.name update
+    const [updatedRegistration] = await prisma.$transaction([
+      prisma.registration.update({
+        where: { id: user.registrationId },
+        data: {
+          salutation: data.salutation,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          street: data.street,
+          addressExtra: data.addressExtra ?? null,
+          zipCode: data.zipCode,
+          city: data.city,
+        },
+        select: {
+          id: true,
+          salutation: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          street: true,
+          addressExtra: true,
+          zipCode: true,
+          city: true,
+          school: true,
+          grade: true,
+        },
+      }),
+
+      prisma.user.update({
+        where: { id: user.id },
+        data: { name: `${data.firstName} ${data.lastName}`.trim() },
+        select: { id: true },
+      }),
+    ]);
+
+    return updatedRegistration;
+  },
+
+  //Only for Participants
+  async getDetails(userId: number) {
+    const details = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { registration: {
+        select: {
+          id: true,
+          salutation: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          street: true,
+          addressExtra: true,
+          zipCode: true,
+          city: true,
+          school: true,
+          grade:true,
+        },
+      },
+    }
+    });
+
+    if (!details) {
+      const err: any = new Error("DETAILS_NOT_FOUND");
+      err.status = 404;
+      throw err;
+    }
+    return details;
+  },
+
   async getMe(userId: number) {
     const user = await prisma.user.findUnique({
       where: { id: userId },

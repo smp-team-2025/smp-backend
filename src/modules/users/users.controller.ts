@@ -4,6 +4,55 @@ import { UserRole } from "@prisma/client";
 import { usersService } from "./users.service";
 
 export const usersController = {
+  async details(req: AuthRequest, res: Response) {
+    const auth = req.auth;
+    if (!auth) return res.status(401).json({ error: "UNAUTHORIZED" });
+
+    const details = await usersService.getDetails(auth.userId);
+    return res.json(details) // RegId, Salutation, Name, Email, Adress, School, Grade
+  },
+
+  async update(req: AuthRequest, res: Response) {
+    const auth = req.auth;
+    if (!auth) return res.status(401).json({ error: "UNAUTHORIZED" });
+
+    try {
+      const {
+        salutation,
+        firstName,
+        lastName,
+        street,
+        addressExtra,
+        zipCode,
+        city,
+      } = req.body;
+
+      if (
+        !salutation ||
+        !firstName ||
+        !lastName ||
+        !street ||
+        !zipCode ||
+        !city
+      ) {
+        return res.status(400).json({ error: "Missing required fields"});
+      }
+
+      const update = await usersService.updateDetails(auth.userId, {
+        salutation,
+        firstName,
+        lastName,
+        street,
+        addressExtra,
+        zipCode,
+        city,
+      });
+      return res.status(200).json(update);
+    } catch (err: any) {
+      console.error("Error occured while updating user details: ", err);
+      return res.status(500).json("Internal server error");
+    }
+  },
 
   async me(req: AuthRequest, res: Response) {
       const auth = req.auth;
