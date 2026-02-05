@@ -5,6 +5,9 @@ import { UserRole } from "@prisma/client";
 
 export const eventsRouter = Router();
 
+// GET active event
+eventsRouter.get("/active", requireAuth, eventsController.getActive);
+
 // Organizer-only
 eventsRouter.get("/", requireAuth, requireRole(UserRole.ORGANIZER), eventsController.list);
 eventsRouter.get("/:id", requireAuth, requireRole(UserRole.ORGANIZER), eventsController.getById);

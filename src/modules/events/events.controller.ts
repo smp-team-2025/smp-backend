@@ -8,6 +8,12 @@ function toIntId(param: string) {
 }
 
 export const eventsController = {
+  async getActive(_req: Request, res: Response) {
+    const active = await eventsService.getActive();
+    if (!active) return res.status(404).json({ error: "NO_ACTIVE_EVENT" });
+    return res.json(active);
+  },
+
   async list(_req: Request, res: Response) {
     const events = await eventsService.list();
     res.json(events);
@@ -30,6 +36,10 @@ export const eventsController = {
       return res.status(400).json({ error: "TITLE_REQUIRED" });
     }
 
+    if (startDate && endDate && String(startDate) > String(endDate)) {
+      return res.status(400).json({ error: "INVALID_DATE_RANGE" });
+    }
+
     const created = await eventsService.create({
       title,
       description,
@@ -46,6 +56,10 @@ export const eventsController = {
     if (!id) return res.status(400).json({ error: "INVALID_ID" });
 
     const { title, description, startDate, endDate, isActive } = req.body ?? {};
+
+    if (startDate && endDate && String(startDate) > String(endDate)) {
+      return res.status(400).json({ error: "INVALID_DATE_RANGE" });
+    }
 
     const updated = await eventsService.update(id, {
       title,
@@ -64,9 +78,16 @@ export const eventsController = {
     const id = toIntId(req.params.id);
     if (!id) return res.status(400).json({ error: "INVALID_ID" });
 
-    const ok = await eventsService.remove(id);
-    if (!ok) return res.status(404).json({ error: "NOT_FOUND" });
-
-    res.status(204).send();
+    try {
+      const ok = await eventsService.remove(id);
+      if (!ok) return res.status(404).json({ error: "NOT_FOUND" });
+      return res.status(204).send();
+    } catch (err: any) {
+      if (err?.message === "CANNOT_DELETE_ACTIVE_EVENT") {
+        return res.status(409).json({ error: "CANNOT_DELETE_ACTIVE_EVENT" });
+      }
+      console.error(err);
+      return res.status(500).json({ error: "INTERNAL_SERVER_ERROR" });
+    }
   },
 };

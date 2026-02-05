@@ -77,6 +77,10 @@ model Registration {
   createdAt DateTime           @default(now())
   status    RegistrationStatus @default(PENDING)
 
+  eventId Int
+  event   Event @relation(fields: [eventId], references: [id])
+
+
   user User?
 }
 
@@ -88,6 +92,7 @@ model Event {
   startDate   DateTime?
   endDate     DateTime?
   isActive    Boolean   @default(true)
+  registrationClosesAt DateTime?
 
   sessions Session[]
 
@@ -96,6 +101,8 @@ model Event {
   staffAnnouncements StaffAnnouncement[]
 
   diplomas         Diploma[]
+
+  registrations Registration[]
 
   @@map("events")
 }

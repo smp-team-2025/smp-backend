@@ -1,8 +1,9 @@
-import { UserRole } from "@prisma/client";
+import { RegistrationStatus, UserRole } from "@prisma/client";
 import { prisma } from "../../prisma";
 import bcrypt from "bcryptjs";
 import { sendApprovalEmail } from "./registration.mail.service";
 import crypto from "crypto";
+import { eventsService } from "../events/events.service";
 
 
 export type RegistrationInput = {
@@ -22,20 +23,57 @@ export type RegistrationInput = {
 };
 
 export const registrationService = {
-  async approveAllPendingRegistrations() {
-    const result = await prisma.registration.updateMany({
-      where: {status: "PENDING"},
-      data: {status: "APPROVED"},
+  async createRegistration(input: RegistrationInput) {
+    if (input.email !== input.confirmEmail) throw new Error("EMAIL_MISMATCH");
+
+    const activeEventId = await eventsService.getActiveEventId();
+
+    return prisma.registration.create({
+      data: {
+        salutation: input.salutation,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        email: input.email,
+        confirmEmail: input.confirmEmail,
+        street: input.street,
+        addressExtra: input.addressExtra ?? null,
+        zipCode: input.zipCode,
+        city: input.city,
+        school: input.school,
+        grade: input.grade,
+        motivation: input.motivation ?? null,
+        comments: input.comments ?? null,
+        status: RegistrationStatus.PENDING,
+
+        eventId: activeEventId,
+      },
     });
+  },
+
+  async getAllRegistrations(eventId?: number) {
+    const effectiveEventId = eventId ?? (await eventsService.getActiveEventId());
+
+    return prisma.registration.findMany({
+      where: { eventId: effectiveEventId },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+
+  async approveAllPendingRegistrations(eventId?: number) {
+    const effectiveEventId = eventId ?? (await eventsService.getActiveEventId());
+
+    const result = await prisma.registration.updateMany({
+      where: {
+        eventId: effectiveEventId,
+        status: RegistrationStatus.PENDING,
+      },
+      data: { status: RegistrationStatus.APPROVED },
+    });
+
     return result.count;
   },
 
-  async getAllRegistrations() {
-    const registrations = await prisma.registration.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-    return registrations;
-  },
+
 
   async getRegistrationById(id: number) {
     const registration = await prisma.registration.findUnique({
@@ -75,7 +113,7 @@ export const registrationService = {
       },
     });
 
-    await sendApprovalEmail(user.email,user.name,randomPassword);
+    await sendApprovalEmail(user.email, user.name, randomPassword);
 
     return updatedRegistration;
   },
@@ -88,38 +126,5 @@ export const registrationService = {
     return registration;
   },
 
-  async createRegistration(data: RegistrationInput) {
-    if (data.email !== data.confirmEmail) {
-      const error = new Error("EMAIL_MISMATCH");
-      throw error;
-    }
 
-    //TODO: check if email already exists
-
-    const registration = await prisma.registration.create({
-      data: {
-        salutation: data.salutation,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        confirmEmail: data.confirmEmail,
-        street: data.street,
-        addressExtra: data.addressExtra ?? null,
-        zipCode: data.zipCode,
-        city: data.city,
-        school: data.school,
-        grade: data.grade,
-        motivation: data.motivation ?? null,
-        comments: data.comments ?? null,
-        // status = PENDING (default)
-      },
-      select: {
-        id: true,
-        status: true,
-        createdAt: true,
-      },
-    });
-
-    return registration;
-  },
 };
