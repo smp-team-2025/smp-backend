@@ -14,6 +14,32 @@ export const eventsController = {
     return res.json(active);
   },
 
+  async patchEvent(req: Request, res: Response) {
+    const eventId = Number(req.params.id);
+    if (!Number.isFinite(eventId)) {
+      return res.status(400).json({ error: "INVALID_EVENT_ID" });
+    }
+
+    const { registrationClosesAt } = req.body ?? {};
+
+    if (!(registrationClosesAt === null || typeof registrationClosesAt === "string")) {
+      return res.status(400).json({ error: "INVALID_BODY" });
+    }
+
+    try {
+      const updated = await eventsService.updateRegistrationClosesAt(
+        eventId,
+        registrationClosesAt
+      );
+      return res.json(updated);
+    } catch (e: any) {
+      if (e?.code === "INVALID_DATE") return res.status(400).json({ error: "INVALID_DATE" });
+      if (e?.code === "EVENT_NOT_FOUND") return res.status(404).json({ error: "EVENT_NOT_FOUND" });
+      console.error(e);
+      return res.status(500).json({ error: "INTERNAL_ERROR" });
+    }
+  },
+
   async list(_req: Request, res: Response) {
     const events = await eventsService.list();
     res.json(events);

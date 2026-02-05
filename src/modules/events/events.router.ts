@@ -14,3 +14,4 @@ eventsRouter.get("/:id", requireAuth, requireRole(UserRole.ORGANIZER), eventsCon
 eventsRouter.post("/", requireAuth, requireRole(UserRole.ORGANIZER), eventsController.create);
 eventsRouter.put("/:id", requireAuth, requireRole(UserRole.ORGANIZER), eventsController.update);
 eventsRouter.delete("/:id", requireAuth, requireRole(UserRole.ORGANIZER), eventsController.remove);
+eventsRouter.patch("/:id", requireAuth, requireRole(UserRole.ORGANIZER), eventsController.patchEvent);

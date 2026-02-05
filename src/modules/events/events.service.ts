@@ -23,8 +23,47 @@ export const eventsService = {
     return prisma.event.findFirst({
       where: { isActive: true },
       orderBy: [{ createdAt: "desc" }],
-      select: { id: true, title: true, description: true, startDate: true, endDate: true, isActive: true }
+      select: {
+        id: true, title: true, description: true, startDate: true,
+        endDate: true, isActive: true, registrationClosesAt: true
+      }
     });
+  },
+
+  async updateRegistrationClosesAt(eventId: number, value: string | null) {
+    let next: Date | null = null;
+
+    if (value !== null) {
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) {
+        const err: any = new Error("INVALID_DATE");
+        err.code = "INVALID_DATE";
+        throw err;
+      }
+      next = d;
+    }
+
+    const exists = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: { id: true },
+    });
+    if (!exists) {
+      const err: any = new Error("EVENT_NOT_FOUND");
+      err.code = "EVENT_NOT_FOUND";
+      throw err;
+    }
+
+    const updated = await prisma.event.update({
+      where: { id: eventId },
+      data: { registrationClosesAt: next },
+      select: {
+        id: true,
+        title: true,
+        registrationClosesAt: true,
+      },
+    });
+
+    return updated;
   },
 
   async list() {
