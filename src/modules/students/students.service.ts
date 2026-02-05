@@ -1,9 +1,15 @@
 import { prisma } from "../../prisma";
+import { eventsService } from "../events/events.service";
 
 export const studentsService = {
-  async listApprovedStudents() {
+  async listApprovedStudents(eventId?: number) {
+    const effectiveEventId = eventId ?? (await eventsService.getActiveEventId());
+
     const regs = await prisma.registration.findMany({
-      where: { status: "APPROVED" },
+      where: {
+        status: "APPROVED",
+        eventId: effectiveEventId,
+      },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -23,6 +29,7 @@ export const studentsService = {
     });
 
     const emails = regs.map((r) => r.email);
+
     const users = await prisma.user.findMany({
       where: { email: { in: emails } },
       select: { id: true, email: true, role: true, createdAt: true },
