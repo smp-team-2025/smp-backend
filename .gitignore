@@ -157,3 +157,4 @@ vite.config.ts.timestamp-*
 
 # Uploaded files
 /uploads/
+src/modules/.DS_Store
