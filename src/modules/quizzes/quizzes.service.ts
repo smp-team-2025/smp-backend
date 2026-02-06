@@ -2,26 +2,60 @@ import { prisma } from "../../prisma";
 
 export const quizzesService = {
   async getAllQuestions() {
-    return await prisma.fermiQuestion.findMany({
+    const questions = await prisma.fermiQuestion.findMany({
       orderBy: { id: "asc" },
+      include: {
+        quizQuestions: {
+          include: {
+            quiz: {
+              include: {
+                session: {
+                  select: {
+                    id: true,
+                    title: true,
+                    startsAt: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
+
+    // Transform to include usage info
+    return questions.map((q) => ({
+      id: q.id,
+      text: q.text,
+      correctAnswer: q.correctAnswer,
+      correctAnswer2: q.correctAnswer2,
+      createdAt: q.createdAt,
+      usedIn: q.quizQuestions.map((qq) => ({
+        quizId: qq.quiz.id,
+        sessionId: qq.quiz.sessionId,
+        sessionTitle: qq.quiz.session.title,
+        sessionStartsAt: qq.quiz.session.startsAt,
+      })),
+    }));
   },
 
-  async createQuestion(text: string, correctAnswer?: number) {
+  async createQuestion(text: string, correctAnswer?: number, correctAnswer2?: number) {
     return await prisma.fermiQuestion.create({
       data: {
         text,
         correctAnswer: correctAnswer ?? null,
+        correctAnswer2: correctAnswer2 ?? null,
       },
     });
   },
 
-  async updateQuestion(id: number, text: string, correctAnswer?: number) {
+  async updateQuestion(id: number, text: string, correctAnswer?: number, correctAnswer2?: number) {
     return await prisma.fermiQuestion.update({
       where: { id },
       data: {
         text,
         correctAnswer: correctAnswer ?? null,
+        correctAnswer2: correctAnswer2 ?? null,
       },
     });
   },

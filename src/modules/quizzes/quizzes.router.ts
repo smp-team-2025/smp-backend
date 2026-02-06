@@ -67,6 +67,13 @@ quizzesRouter.get(
   quizzesController.getStatistics
 );
 
+quizzesRouter.get(
+  "/:id/leaderboard",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER),
+  quizzesController.getLeaderboard
+);
+
 quizzesRouter.delete(
   "/:id",
   requireAuth,
