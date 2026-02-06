@@ -1,31 +1,28 @@
+/**This script is used to create a demo account. Do not use it to create a real account! */
+
 import { PrismaClient, UserRole } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('⏳ Seeding hiwi user...');
+  console.log('⏳ Seeding organizer user...');
 
   const hashedPassword = await bcrypt.hash('123456', 10);
 
   try {
-    const newHiwi = await prisma.user.create({
+    const newOrganizer = await prisma.user.create({
       data: {
-        email: 'hiwi@smp.de',
+        email: 'organizer@smp.de',
         passwordHash: hashedPassword, 
-        name: 'Hiwi 1',
-        role: UserRole.HIWI, 
-        hiwi: {
-          create: {
-            clothingSize: "M",
-      },
-    },
+        name: 'Organizer 1',
+        role: UserRole.ORGANIZER, 
       },
     });
 
-    console.log('✅ Hiwi user created successfully!');
+    console.log('✅ Organizer user created successfully!');
     console.log('-----------------------------------');
-    console.log(`📧 Email:    ${newHiwi.email}`);
+    console.log(`📧 Email:    ${newOrganizer.email}`);
     console.log(`🔑 Password: 123456`);
     console.log('-----------------------------------');
 
