@@ -15,3 +15,4 @@ eventsRouter.post("/", requireAuth, requireRole(UserRole.ORGANIZER), eventsContr
 eventsRouter.put("/:id", requireAuth, requireRole(UserRole.ORGANIZER), eventsController.update);
 eventsRouter.delete("/:id", requireAuth, requireRole(UserRole.ORGANIZER), eventsController.remove);
 eventsRouter.patch("/:id", requireAuth, requireRole(UserRole.ORGANIZER), eventsController.patchEvent);
+eventsRouter.get("/:id/hiwi-attendance", requireAuth, requireRole(UserRole.ORGANIZER), eventsController.getHiwiAttendanceByEvent);

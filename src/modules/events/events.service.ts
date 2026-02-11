@@ -165,4 +165,46 @@ export const eventsService = {
     if (!active) throw new Error("NO_ACTIVE_EVENT");
     return active.id;
   },
+
+  async getHiwiAttendanceByEvent(eventId: number) {
+    // sessions of this event
+    const sessions = await prisma.session.findMany({
+      where: { eventId },
+      select: { id: true, title: true, startsAt: true, location: true },
+      orderBy: { startsAt: "asc" },
+    });
+
+    // all hiwi assignments for sessions of this event
+    const assignments = await prisma.hiWiSession.findMany({
+      where: { session: { eventId } },
+      select: {
+        status: true, // must exist
+        sessionId: true,
+        hiwi: {
+          select: {
+            id: true,
+            user: { select: { id: true, name: true, email: true } },
+          },
+        },
+      },
+      orderBy: { sessionId: "asc" },
+    });
+
+    const bySessionId = new Map<number, any[]>();
+    for (const a of assignments) {
+      if (!bySessionId.has(a.sessionId)) bySessionId.set(a.sessionId, []);
+      bySessionId.get(a.sessionId)!.push({
+        hiwiId: a.hiwi.id,
+        userId: a.hiwi.user.id,
+        name: a.hiwi.user.name,
+        email: a.hiwi.user.email,
+        status: a.status ?? null,
+      });
+    }
+
+    return sessions.map((s) => ({
+      session: s,
+      hiwis: bySessionId.get(s.id) ?? [],
+    }));
+  },
 };

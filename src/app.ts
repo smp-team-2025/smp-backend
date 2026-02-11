@@ -12,6 +12,7 @@ import { announcementsRouter } from "./modules/announcements/announcements.route
 import { quizzesRouter } from "./modules/quizzes/quizzes.router";
 import { diplomasRouter } from "./modules/diplomas/diplomas.router";
 import path from "path";
+import { hiwiSessionsRouter } from "./modules/hiwi-sessions/hiwi-sessions.router";
 
 
 
@@ -74,3 +75,6 @@ app.use("/api/quizzes", quizzesRouter);
 
 // Diplomas endpoint
 app.use("/api/diplomas", diplomasRouter);
+
+//Hiwi attendance endpoint
+app.use("/api/hiwi-sessions", hiwiSessionsRouter);

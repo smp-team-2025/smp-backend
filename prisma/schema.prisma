@@ -21,6 +21,12 @@ enum AnnouncementVisibility {
   PUBLIC
 }
 
+enum HiwiAvailabilityStatus {
+  AVAILABLE
+  MAYBE
+  UNAVAILABLE
+}
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -156,6 +162,8 @@ model HiWiSession {
   session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+
+  status    HiwiAvailabilityStatus?
 
   @@unique([hiwiId, sessionId])
   @@index([sessionId])

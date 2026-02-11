@@ -8,6 +8,18 @@ function toIntId(param: string) {
 }
 
 export const eventsController = {
+  async getHiwiAttendanceByEvent(req: Request, res: Response) {
+    const eventId = Number(req.params.id);
+    if (Number.isNaN(eventId)) return res.status(400).json({ error: "INVALID_EVENT_ID" });
+
+    try {
+      const data = await eventsService.getHiwiAttendanceByEvent(eventId);
+      return res.json(data);
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message ?? "INTERNAL_ERROR" });
+    }
+  },
+
   async getActive(_req: Request, res: Response) {
     const active = await eventsService.getActive();
     if (!active) return res.status(404).json({ error: "NO_ACTIVE_EVENT" });
