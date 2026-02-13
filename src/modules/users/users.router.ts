@@ -7,6 +7,9 @@ export const usersRouter = Router();
 //GET /api/me
 usersRouter.get("/me", requireAuth, usersController.me);
 
+// PATCH /api/me/participant-type
+usersRouter.patch("/me/participant-type", requireAuth, usersController.updateParticipantType);
+
 // GET /api/users/:id/qrcode
 usersRouter.get("/:id/qrcode", requireAuth, usersController.getQrCodePng);
 

@@ -22,6 +22,15 @@ export type RegistrationInput = {
   comments?: string;
 };
 
+// Helper function to capitalize name (e.g., "can erdebil" -> "Can Erdebil")
+function capitalizeName(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
 export const registrationService = {
   async createRegistration(input: RegistrationInput) {
     if (input.email !== input.confirmEmail) throw new Error("EMAIL_MISMATCH");
@@ -102,9 +111,12 @@ export const registrationService = {
     //Generating QR ID
     const qrId = crypto.randomUUID();
 
+    const fullName = `${registration.firstName} ${registration.lastName}`.trim();
+    const capitalizedName = capitalizeName(fullName);
+
     const user = await prisma.user.create({
       data: {
-        name: `${registration.firstName} ${registration.lastName}`.trim(),
+        name: capitalizedName,
         email: registration.email,
         passwordHash: passwordHash,
         role: UserRole.PARTICIPANT,

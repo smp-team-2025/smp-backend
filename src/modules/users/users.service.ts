@@ -119,6 +119,7 @@ export const usersService = {
         name: true,
         email: true,
         role: true,
+        participantType: true,
       },
     });
 
@@ -128,6 +129,46 @@ export const usersService = {
       throw err;
     }
     return user;
+  },
+
+  async updateParticipantType(userId: number, participantType: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true },
+    });
+
+    if (!user) {
+      const err: any = new Error("USER_NOT_FOUND");
+      err.status = 404;
+      throw err;
+    }
+
+    if (user.role !== UserRole.PARTICIPANT) {
+      const err: any = new Error("ONLY_PARTICIPANTS_CAN_SET_TYPE");
+      err.status = 403;
+      throw err;
+    }
+
+    const validTypes = ['STUDENT', 'TEACHER', 'GUEST'];
+    if (!validTypes.includes(participantType)) {
+      const err: any = new Error("INVALID_PARTICIPANT_TYPE");
+      err.status = 400;
+      throw err;
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { participantType: participantType as any },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        participantType: true,
+      },
+    });
+
+    return updated;
   },
 
   async getQrCodePngByUserId(userId: number): Promise<{ png: Buffer; fileName: string }> {

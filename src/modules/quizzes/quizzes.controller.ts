@@ -170,6 +170,29 @@ export const quizzesController = {
     }
   },
 
+  async startTimer(req: AuthRequest, res: Response) {
+    try {
+      const quizId = parseInt(req.params.id);
+      const { durationMinutes } = req.body;
+
+      if (!durationMinutes || typeof durationMinutes !== "number") {
+        return res.status(400).json({ error: "Duration in minutes required" });
+      }
+
+      const quiz = await quizzesService.startTimer(quizId, durationMinutes);
+      return res.json(quiz);
+    } catch (error: any) {
+      console.error("Start timer error:", error);
+      if (error.message === "QUIZ_NOT_FOUND") {
+        return res.status(404).json({ error: "Quiz not found" });
+      }
+      if (error.message === "TIMER_ALREADY_STARTED") {
+        return res.status(400).json({ error: "Timer already started" });
+      }
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  },
+
   async deleteQuiz(req: AuthRequest, res: Response) {
     try {
       const id = parseInt(req.params.id);
