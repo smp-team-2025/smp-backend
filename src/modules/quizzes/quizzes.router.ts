@@ -74,6 +74,13 @@ quizzesRouter.get(
   quizzesController.getLeaderboard
 );
 
+quizzesRouter.post(
+  "/:id/start-timer",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER),
+  quizzesController.startTimer
+);
+
 quizzesRouter.delete(
   "/:id",
   requireAuth,

@@ -122,6 +122,33 @@ export const quizzesService = {
     });
   },
 
+  async startTimer(quizId: number, durationMinutes: number) {
+    const quiz = await prisma.fermiQuiz.findUnique({
+      where: { id: quizId },
+    });
+
+    if (!quiz) {
+      throw new Error("QUIZ_NOT_FOUND");
+    }
+
+    if (quiz.timerStartedAt) {
+      throw new Error("TIMER_ALREADY_STARTED");
+    }
+
+    return await prisma.fermiQuiz.update({
+      where: { id: quizId },
+      data: {
+        timerStartedAt: new Date(),
+        timerDurationMinutes: durationMinutes,
+      },
+      select: {
+        id: true,
+        timerStartedAt: true,
+        timerDurationMinutes: true,
+      },
+    });
+  },
+
   async submitQuiz(
     participantId: number,
     quizId: number,
@@ -309,6 +336,7 @@ export const quizzesService = {
                 id: true,
                 name: true,
                 email: true,
+                participantType: true,
               },
             },
           },
@@ -360,21 +388,32 @@ export const quizzesService = {
         participantId: response.participant.id,
         participantName: response.participant.name,
         participantEmail: response.participant.email,
+        participantType: response.participant.participantType,
         totalScore,
         questionScores,
         submittedAt: response.submittedAt,
       };
     });
 
-    // Sort by total score (lower is better)
-    leaderboard.sort((a, b) => a.totalScore - b.totalScore);
+    // Separate by participant type
+    const students = leaderboard.filter(p => p.participantType === 'STUDENT');
+    const teachers = leaderboard.filter(p => p.participantType === 'TEACHER');
+    const guests = leaderboard.filter(p => p.participantType === 'GUEST');
 
-    // Add rank
-    const rankedLeaderboard = leaderboard.map((entry, index) => ({
-      ...entry,
-      rank: index + 1,
-    }));
+    // Sort each leaderboard (lower score is better)
+    students.sort((a, b) => a.totalScore - b.totalScore);
+    teachers.sort((a, b) => a.totalScore - b.totalScore);
+    guests.sort((a, b) => a.totalScore - b.totalScore);
 
-    return rankedLeaderboard;
+    // Add rank to each leaderboard
+    const rankedStudents = students.map((entry, index) => ({ ...entry, rank: index + 1 }));
+    const rankedTeachers = teachers.map((entry, index) => ({ ...entry, rank: index + 1 }));
+    const rankedGuests = guests.map((entry, index) => ({ ...entry, rank: index + 1 }));
+
+    return {
+      students: rankedStudents,
+      teachers: rankedTeachers,
+      guests: rankedGuests,
+    };
   },
 };

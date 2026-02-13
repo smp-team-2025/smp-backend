@@ -59,8 +59,26 @@ export const usersController = {
       if (!auth) return res.status(401).json({ error: "UNAUTHORIZED" });
 
       const me = await usersService.getMe(auth.userId);
-      return res.json(me); // { id, name, email, role }
+      return res.json(me); // { id, name, email, role, participantType }
     },
+
+  async updateParticipantType(req: AuthRequest, res: Response) {
+    const auth = req.auth;
+    if (!auth) return res.status(401).json({ error: "UNAUTHORIZED" });
+
+    const { participantType } = req.body;
+    if (!participantType) {
+      return res.status(400).json({ error: "PARTICIPANT_TYPE_REQUIRED" });
+    }
+
+    try {
+      const updated = await usersService.updateParticipantType(auth.userId, participantType);
+      return res.json(updated);
+    } catch (e: any) {
+      const status = e?.status ?? 500;
+      return res.status(status).json({ error: e?.message ?? "INTERNAL_ERROR" });
+    }
+  },
 
   async getQrCodePng(req: AuthRequest, res: Response) {
     const requestedId = Number(req.params.id);

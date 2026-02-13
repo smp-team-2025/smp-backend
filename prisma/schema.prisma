@@ -10,6 +10,12 @@ enum UserRole {
   HIWI
 }
 
+enum ParticipantType {
+  STUDENT
+  TEACHER
+  GUEST
+}
+
 enum AttendanceSource {
   ONSITE //Hörsaal
   ONLINE //Zoom
@@ -37,18 +43,19 @@ datasource db {
 }
 
 model User {
-  id                  Int           @id @default(autoincrement())
+  id                  Int              @id @default(autoincrement())
   name                String
-  email               String        @unique
+  email               String           @unique
   passwordHash        String
-  role                UserRole      @default(PARTICIPANT)
-  createdAt           DateTime      @default(now())
-  registrationId      Int?          @unique
-  registration        Registration? @relation(fields: [registrationId], references: [id])
+  role                UserRole         @default(PARTICIPANT)
+  participantType     ParticipantType? // Only for PARTICIPANT role
+  createdAt           DateTime         @default(now())
+  registrationId      Int?             @unique
+  registration        Registration?    @relation(fields: [registrationId], references: [id])
   hiwi                HiWi?
   resetTokenHash      String?
   resetTokenExpiresAt DateTime?
-  qrId                String?       @unique
+  qrId                String?          @unique
   attendances         Attendance[]
 
   staffAnnouncements StaffAnnouncement[]
@@ -56,7 +63,7 @@ model User {
 
   fermiResponses FermiResponse[]
 
-  diplomas         Diploma[]
+  diplomas Diploma[]
 }
 
 model Registration {
@@ -283,10 +290,12 @@ model FermiQuestion {
 }
 
 model FermiQuiz {
-  id        Int      @id @default(autoincrement())
-  sessionId Int      @unique
-  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id                   Int       @id @default(autoincrement())
+  sessionId            Int       @unique
+  session              Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  createdAt            DateTime  @default(now())
+  timerStartedAt       DateTime?
+  timerDurationMinutes Int?
 
   questions FermiQuizQuestion[]
   responses FermiResponse[]
