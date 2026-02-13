@@ -254,7 +254,7 @@ export const diplomaService = {
 
   async listIssuedDiplomas(eventId: number) {
     return prisma.diploma.findMany({
-      where: { eventId },
+      where: { eventId},
       include: {
         participant: {
           select: {

@@ -56,3 +56,11 @@ attendanceRouter.get(
   requireRole(UserRole.ORGANIZER),
   attendanceController.getZoomUnmatched
 );
+
+// GET /api/attendance/export.csv (Organizer Only)
+attendanceRouter.get(
+  "/export.csv",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER),
+  attendanceController.exportCsv
+);

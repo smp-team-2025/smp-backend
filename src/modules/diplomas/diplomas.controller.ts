@@ -1,8 +1,10 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { AuthRequest } from "../../middleware/auth";
 import { diplomaService } from "./diplomas.service";
 import { diplomaPdfService } from "./diplomas.pdf.service";
 import { UserRole } from "@prisma/client";
+import { toCsv } from "../../services/csv";
+
 
 export const diplomasController = {
   /**
@@ -287,4 +289,55 @@ export const diplomasController = {
       return res.status(500).json({ error: "INTERNAL_SERVER_ERROR" });
     }
   },
+
+  async exportIssuedCsv(req: Request, res: Response) {
+  const eventId = parseInt(req.params.eventId);
+  if (Number.isNaN(eventId)) {
+    return res.status(400).json({ error: "INVALID_EVENT_ID" });
+  }
+
+  try {
+    const diplomas = await diplomaService.listIssuedDiplomas(eventId);
+
+    const headers = [
+      "Event-ID",
+      "Event",
+      "Startdatum",
+      "Enddatum",
+      "Zertifikatsnummer",
+      "Ausgestellt am",
+      "Teilnehmer-ID",
+      "Name",
+      "E-Mail",
+      "Schule",
+    ];
+
+    const rows = diplomas.map((d: any) => ({
+      "Event-ID": d.event?.id ?? eventId,
+      "Event": d.event?.title ?? "",
+      "Startdatum": d.event?.startDate ?? "",
+      "Enddatum": d.event?.endDate ?? "",
+      "Zertifikatsnummer": d.certificateNumber ?? "",
+      "Ausgestellt am": d.issuedAt ?? "",
+      "Teilnehmer-ID": d.participant?.id ?? "",
+      "Name": d.participant?.name ?? "",
+      "E-Mail": d.participant?.email ?? "",
+      "Schule": d.participant?.registration?.school ?? "",
+    }));
+
+    const csv = toCsv(headers, rows);
+
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="diplomas_event-${eventId}.csv"`
+    );
+
+    return res.status(200).send(csv);
+  } catch (error) {
+    console.error("Export diplomas CSV error:", error);
+    return res.status(500).json({ error: "INTERNAL_SERVER_ERROR" });
+  }
+},
+
 };

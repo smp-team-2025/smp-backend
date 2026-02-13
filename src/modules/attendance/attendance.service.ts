@@ -239,6 +239,99 @@ class AttendanceService {
       orderBy: { createdAt: "asc" },
     });
   }
+
+   // Organizer: list attendance for a single session
+  async listAttendancesForSession(sessionId: number) {
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+      select: {
+        id: true,
+        title: true,
+        startsAt: true,
+        event: { select: { id: true, title: true } },
+      },
+    });
+
+    if (!session) {
+      throw new Error("SESSION_NOT_FOUND");
+    }
+
+    const attendances = await prisma.attendance.findMany({
+      where: { sessionId },
+      include: {
+        session: {
+          select: {
+            id: true,
+            title: true,
+            startsAt: true,
+            event: { select: { id: true, title: true } },
+          },
+        },
+        participant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            registration: { select: { school: true, grade: true } },
+          },
+        },
+        scannedByHiwi: {
+          select: {
+            id: true,
+            user: { select: { name: true, email: true } },
+          },
+        },
+      },
+      orderBy: { scannedAt: "desc" },
+    });
+
+    return { session, attendances };
+  }
+
+  // Organizer: list attendance for all sessions of an event
+  async listAttendancesForEvent(eventId: number) {
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: { id: true, title: true },
+    });
+
+    if (!event) {
+      throw new Error("EVENT_NOT_FOUND");
+    }
+
+    const attendances = await prisma.attendance.findMany({
+      where: {
+        session: { eventId },
+      },
+      include: {
+        session: {
+          select: {
+            id: true,
+            title: true,
+            startsAt: true,
+            event: { select: { id: true, title: true } },
+          },
+        },
+        participant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            registration: { select: { school: true, grade: true } },
+          },
+        },
+        scannedByHiwi: {
+          select: {
+            id: true,
+            user: { select: { name: true, email: true } },
+          },
+        },
+      },
+      orderBy: [{ sessionId: "asc" }, { scannedAt: "desc" }],
+    });
+
+    return { event, attendances };
+  }
 };
 
 export const attendanceService = new AttendanceService();

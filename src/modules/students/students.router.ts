@@ -11,3 +11,10 @@ studentsRouter.get(
   requireRole(UserRole.ORGANIZER),
   studentsController.list
 );
+
+studentsRouter.get(
+  "/export.csv",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER),
+  studentsController.exportCsv
+);

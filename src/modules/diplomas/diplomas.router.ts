@@ -80,3 +80,10 @@ diplomasRouter.delete(
   requireRole(UserRole.ORGANIZER),
   diplomasController.delete
 );
+
+diplomasRouter.get(
+  "/event/:eventId/issued.csv",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER),
+  diplomasController.exportIssuedCsv
+);

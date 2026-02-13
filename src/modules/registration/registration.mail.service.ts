@@ -42,7 +42,6 @@ export async function sendApprovalEmail(
           <li>Email: ${to}</li>
           <li>Password: <strong>${password}</strong></li>
         </ul>
-        <p>Please log in and change your password immediately.</p>
       `,
     });
   } catch (err) {
