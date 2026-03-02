@@ -1,4 +1,4 @@
-import { RegistrationStatus, UserRole } from "@prisma/client";
+import { RegistrationStatus, UserRole, ParticipantType } from "@prisma/client";
 import { prisma } from "../../prisma";
 import bcrypt from "bcryptjs";
 import { sendApprovalEmail } from "./registration.mail.service";
@@ -29,6 +29,20 @@ function capitalizeName(name: string): string {
     .split(/\s+/)
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
+}
+
+// Helper function to determine participant type from registration data
+function determineParticipantType(school: string, grade: string): ParticipantType {
+  // If school is "Keine" (Nicht an einer Schule) -> GUEST
+  if (school === "Keine") {
+    return ParticipantType.GUEST;
+  }
+  // If grade is "teachers" (Lehrer) -> TEACHER
+  if (grade === "teachers") {
+    return ParticipantType.TEACHER;
+  }
+  // All other cases -> STUDENT
+  return ParticipantType.STUDENT;
 }
 
 export const registrationService = {
@@ -114,12 +128,15 @@ export const registrationService = {
     const fullName = `${registration.firstName} ${registration.lastName}`.trim();
     const capitalizedName = capitalizeName(fullName);
 
+    const participantType = determineParticipantType(registration.school, registration.grade);
+
     const user = await prisma.user.create({
       data: {
         name: capitalizedName,
         email: registration.email,
         passwordHash: passwordHash,
         role: UserRole.PARTICIPANT,
+        participantType: participantType,
         registrationId: registration.id,
         qrId: qrId,
       },
