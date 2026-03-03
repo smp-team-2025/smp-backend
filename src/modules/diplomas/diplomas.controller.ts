@@ -310,6 +310,10 @@ export const diplomasController = {
       "Name",
       "E-Mail",
       "Schule",
+      "Strasse und Hausnummer",
+      "Adresszusatz",
+      "PLZ",
+      "Ort",
     ];
 
     const rows = diplomas.map((d: any) => ({
@@ -323,6 +327,10 @@ export const diplomasController = {
       "Name": d.participant?.name ?? "",
       "E-Mail": d.participant?.email ?? "",
       "Schule": d.participant?.registration?.school ?? "",
+      "Strasse und Hausnummer": d.participant?.registration?.street ?? "",
+      "Adresszusatz": d.participant?.registration?.addressExtra ?? "",
+      "PLZ": d.participant?.registration?.zipCode ?? "",
+      "Ort": d.participant?.registration?.city ??"",
     }));
 
     const csv = toCsv(headers, rows);

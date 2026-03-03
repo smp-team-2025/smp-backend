@@ -262,7 +262,13 @@ export const diplomaService = {
             name: true,
             email: true,
             registration: {
-              select: { school: true },
+              select: {
+                school: true,
+                street: true,
+                addressExtra: true,
+                zipCode: true,
+                city: true
+              },
             },
           },
         },
