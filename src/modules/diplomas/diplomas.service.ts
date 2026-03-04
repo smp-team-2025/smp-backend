@@ -140,6 +140,11 @@ export const diplomaService = {
             registration: {
               select: { school: true },
             },
+          
+            attendances: {
+            where: { session: { eventId } },
+            select: { source: true, sessionId: true },
+            },
           },
         },
         event: {
@@ -148,6 +153,19 @@ export const diplomaService = {
             title: true,
             startDate: true,
             endDate: true,
+          
+            diplomaSigner1Name: true,
+            diplomaSigner1Role: true,
+            diplomaSigner1SignatureUrl: true,
+            diplomaSigner2Name: true,
+            diplomaSigner2Role: true,
+            diplomaSigner2SignatureUrl: true,
+            diplomaLocation: true,
+          
+            sessions: {
+              orderBy: { startsAt: "asc" },
+              select: { id: true, title: true, startsAt: true },
+            },
           },
         },
       },
@@ -173,6 +191,11 @@ export const diplomaService = {
             registration: {
               select: { school: true },
             },
+          
+            attendances: {
+              where: { session: { eventId } },
+              select: { source: true, sessionId: true },
+            },
           },
         },
         event: {
@@ -181,6 +204,19 @@ export const diplomaService = {
             title: true,
             startDate: true,
             endDate: true,
+                    
+            diplomaSigner1Name: true,
+            diplomaSigner1Role: true,
+            diplomaSigner1SignatureUrl: true,
+            diplomaSigner2Name: true,
+            diplomaSigner2Role: true,
+            diplomaSigner2SignatureUrl: true,
+            diplomaLocation: true,
+                    
+            sessions: {
+              orderBy: { startsAt: "asc" },
+              select: { id: true, title: true, startsAt: true },
+            },
           },
         },
       },
@@ -188,6 +224,15 @@ export const diplomaService = {
   },
 
   async getDiplomaByCertificateNumber(certificateNumber: string) {
+    const base = await prisma.diploma.findUnique({
+      where: { certificateNumber },
+      select: { participantId: true, eventId: true },
+    });
+  
+    if (!base) return null;
+  
+    const { participantId, eventId } = base;
+  
     return prisma.diploma.findUnique({
       where: { certificateNumber },
       include: {
@@ -199,6 +244,11 @@ export const diplomaService = {
             registration: {
               select: { school: true },
             },
+          
+            attendances: {
+              where: { session: { eventId } },
+              select: { source: true, sessionId: true },
+            },
           },
         },
         event: {
@@ -207,6 +257,19 @@ export const diplomaService = {
             title: true,
             startDate: true,
             endDate: true,
+          
+            diplomaSigner1Name: true,
+            diplomaSigner1Role: true,
+            diplomaSigner1SignatureUrl: true,
+            diplomaSigner2Name: true,
+            diplomaSigner2Role: true,
+            diplomaSigner2SignatureUrl: true,
+            diplomaLocation: true,
+          
+            sessions: {
+              orderBy: { startsAt: "asc" },
+              select: { id: true, title: true, startsAt: true },
+            },
           },
         },
       },

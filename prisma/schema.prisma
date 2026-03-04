@@ -114,6 +114,14 @@ model Event {
   staffAnnouncements StaffAnnouncement[]
 
   diplomas         Diploma[]
+  // Diploma configuration (per event/year)
+  diplomaSigner1Name         String?
+  diplomaSigner1Role         String?
+  diplomaSigner1SignatureUrl String?
+  diplomaSigner2Name         String?
+  diplomaSigner2Role         String?
+  diplomaSigner2SignatureUrl String?
+  diplomaLocation            String?  @default("Darmstadt")
 
   registrations Registration[]
 

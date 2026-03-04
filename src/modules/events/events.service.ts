@@ -66,6 +66,70 @@ export const eventsService = {
     return updated;
   },
 
+    async updateDiplomaSettings(
+    eventId: number,
+    data: {
+      diplomaSigner1Name: string | null;
+      diplomaSigner1Role: string | null;
+      diplomaSigner2Name: string | null;
+      diplomaSigner2Role: string | null;
+      diplomaLocation: string | null;
+    }
+  ) {
+    const exists = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: { id: true },
+    });
+    if (!exists) {
+      const err: any = new Error("EVENT_NOT_FOUND");
+      err.code = "EVENT_NOT_FOUND";
+      throw err;
+    }
+
+    return prisma.event.update({
+      where: { id: eventId },
+      data,
+      select: {
+        id: true,
+        diplomaSigner1Name: true,
+        diplomaSigner1Role: true,
+        diplomaSigner1SignatureUrl: true,
+        diplomaSigner2Name: true,
+        diplomaSigner2Role: true,
+        diplomaSigner2SignatureUrl: true,
+        diplomaLocation: true,
+      },
+    });
+  },
+
+    async updateDiplomaSignatureUrls(
+    eventId: number,
+    data: { signer1Url?: string; signer2Url?: string }
+  ) {
+    const exists = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: { id: true },
+    });
+    if (!exists) {
+      const err: any = new Error("EVENT_NOT_FOUND");
+      err.code = "EVENT_NOT_FOUND";
+      throw err;
+    }
+
+    return prisma.event.update({
+      where: { id: eventId },
+      data: {
+        ...(data.signer1Url ? { diplomaSigner1SignatureUrl: data.signer1Url } : {}),
+        ...(data.signer2Url ? { diplomaSigner2SignatureUrl: data.signer2Url } : {}),
+      },
+      select: {
+        id: true,
+        diplomaSigner1SignatureUrl: true,
+        diplomaSigner2SignatureUrl: true,
+      },
+    });
+  },
+
   async list() {
     return prisma.event.findMany({
       orderBy: [

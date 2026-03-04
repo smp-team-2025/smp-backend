@@ -65,7 +65,7 @@ diplomasRouter.get(
 );
 
 // GET /api/diplomas/:participantId/:eventId
-// Download diploma PDF (Organizer or own diploma)
+// Download diploma PDF (Organizer)
 diplomasRouter.get(
   "/:participantId/:eventId",
   requireAuth,
