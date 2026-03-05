@@ -204,4 +204,38 @@ export const eventsController = {
       return res.status(500).json({ error: "INTERNAL_SERVER_ERROR" });
     }
   },
+
+  async updateApprovalEmailSettings(req: Request, res: Response) {
+    const eventId = Number(req.params.id);
+    if (!Number.isFinite(eventId)) {
+      return res.status(400).json({ error: "INVALID_EVENT_ID" });
+    }
+
+    const body = (req.body ?? {}) as any;
+    const { approvalEmailSubject, approvalEmailIntro } = body;
+
+    const isStrOrNullOrUndef = (v: any) =>
+      v === null || typeof v === "string" || typeof v === "undefined";
+
+    if (
+      !isStrOrNullOrUndef(approvalEmailSubject) ||
+      !isStrOrNullOrUndef(approvalEmailIntro)
+    ) {
+      return res.status(400).json({ error: "INVALID_BODY" });
+    }
+
+    try {
+      const updated = await eventsService.updateApprovalEmailSettings(eventId, {
+        approvalEmailSubject: approvalEmailSubject ?? null,
+        approvalEmailIntro: approvalEmailIntro ?? null,
+      });
+      return res.json(updated);
+    } catch (e: any) {
+      if (e?.code === "EVENT_NOT_FOUND") {
+        return res.status(404).json({ error: "EVENT_NOT_FOUND" });
+      }
+      console.error(e);
+      return res.status(500).json({ error: "INTERNAL_ERROR" });
+    }
+  },
 };

@@ -123,6 +123,10 @@ model Event {
   diplomaSigner2SignatureUrl String?
   diplomaLocation            String?  @default("Darmstadt")
 
+  // Approval e-mail configuration (per event/year)
+  approvalEmailSubject String?
+  approvalEmailIntro   String?
+
   registrations Registration[]
 
   @@map("events")

@@ -17,5 +17,6 @@ eventsRouter.put("/:id", requireAuth, requireRole(UserRole.ORGANIZER), eventsCon
 eventsRouter.delete("/:id", requireAuth, requireRole(UserRole.ORGANIZER), eventsController.remove);
 eventsRouter.patch("/:id", requireAuth, requireRole(UserRole.ORGANIZER), eventsController.patchEvent);
 eventsRouter.patch("/:id/diploma-settings",requireAuth,requireRole(UserRole.ORGANIZER),eventsController.updateDiplomaSettings);
+eventsRouter.patch("/:id/approval-email-settings",requireAuth,requireRole(UserRole.ORGANIZER),eventsController.updateApprovalEmailSettings);
 eventsRouter.post("/:id/diploma-signatures",requireAuth,requireRole(UserRole.ORGANIZER),upload.fields([{ name: "signer1Signature", maxCount: 1 },{ name: "signer2Signature", maxCount: 1 },]),eventsController.uploadDiplomaSignatures);
 eventsRouter.get("/:id/hiwi-attendance", requireAuth, requireRole(UserRole.ORGANIZER), eventsController.getHiwiAttendanceByEvent);

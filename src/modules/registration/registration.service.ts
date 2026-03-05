@@ -142,7 +142,18 @@ export const registrationService = {
       },
     });
 
-    await sendApprovalEmail(user.email, user.name, randomPassword);
+    const eventEmailSettings = await prisma.event.findUnique({
+      where: { id: registration.eventId },
+      select: {
+        approvalEmailSubject: true,
+        approvalEmailIntro: true,
+      },
+    });
+
+    await sendApprovalEmail(user.email, user.name, randomPassword, {
+      subject: eventEmailSettings?.approvalEmailSubject ?? null,
+      introText: eventEmailSettings?.approvalEmailIntro ?? null,
+    });
 
     return updatedRegistration;
   },

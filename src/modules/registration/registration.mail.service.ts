@@ -19,7 +19,11 @@ function getResend() {
 export async function sendApprovalEmail(
   to: string,
   name: string,
-  password: string
+  password: string,
+  opts?: {
+    subject?: string | null;
+    introText?: string | null;
+  }
 ) {
   const client = getResend();
 
@@ -29,12 +33,28 @@ export async function sendApprovalEmail(
     return;
   }
 
+  const escapeHtml = (input: string) =>
+    input
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\\"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  const intro = (opts?.introText ?? "").trim();
+  const introHtml = intro
+    ? `<div style="margin-bottom:16px">${escapeHtml(intro).replace(/\n/g, "<br/>")}</div>`
+    : "";
+
+  const subject = (opts?.subject ?? "").trim() || "Your SMP registration has been approved";
+
   try {
     await client.emails.send({
       from: FROM,
       to,
-      subject: "Your SMP registration has been approved",
+      subject,
       html: `
+        ${introHtml}
         <p>Hello ${name},</p>
         <p>Your registration for SMP has been approved.</p>
         <p><strong>Your login credentials:</strong></p>

@@ -271,4 +271,29 @@ export const eventsService = {
       hiwis: bySessionId.get(s.id) ?? [],
     }));
   },
+
+  async updateApprovalEmailSettings(
+    eventId: number,
+    data: { approvalEmailSubject: string | null; approvalEmailIntro: string | null }
+  ) {
+    const exists = await prisma.event.findUnique({
+      where: { id: eventId },
+      select: { id: true },
+    });
+    if (!exists) {
+      const err: any = new Error("EVENT_NOT_FOUND");
+      err.code = "EVENT_NOT_FOUND";
+      throw err;
+    }
+
+    return prisma.event.update({
+      where: { id: eventId },
+      data,
+      select: {
+        id: true,
+        approvalEmailSubject: true,
+        approvalEmailIntro: true,
+      },
+    });
+  },
 };
