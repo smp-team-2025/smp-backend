@@ -1,5 +1,5 @@
 import PDFDocument from "pdfkit";
-import type PDFKit from "pdfkit";
+import fs from "node:fs";
 import path from "node:path";
 
 import { diplomaService } from "./diplomas.service";
@@ -29,7 +29,6 @@ function formatMonthYear(date: Date) {
 function winterSemesterLabel(d: Date) {
   const y = d.getFullYear();
   const m = d.getMonth(); // 0..11
-  // Rough rule: Oct–Mar is WS of y/(y+1). Otherwise, still label as WS of y/(y+1).
   const startYear = m >= 9 ? y : y - 1;
   const endYear2 = (startYear + 1).toString().slice(-2);
   return `${startYear}/${endYear2}`;
@@ -38,6 +37,7 @@ function winterSemesterLabel(d: Date) {
 function inferMode(attSources: AttendanceSource[]): ParticipationMode {
   const hasOnsite = attSources.includes(AttendanceSource.ONSITE);
   const hasOnline = attSources.includes(AttendanceSource.ONLINE);
+
   if (hasOnsite && hasOnline) return "HYBRID";
   if (hasOnline) return "ONLINE";
   return "ONSITE";
@@ -57,6 +57,61 @@ function drawSpacedText(
   }
 }
 
+function fileExists(p: string | null | undefined) {
+  return !!p && fs.existsSync(p);
+}
+
+function resolveStoredUploadPath(urlOrPath?: string | null): string | null {
+  if (!urlOrPath) return null;
+
+  if (path.isAbsolute(urlOrPath) && fileExists(urlOrPath)) {
+    return urlOrPath;
+  }
+
+  const normalized = urlOrPath.replace(/\\/g, "/");
+
+  if (normalized.startsWith("/uploads/")) {
+    const rel = normalized.replace(/^\/+/, "");
+    const candidate = path.resolve(process.cwd(), rel);
+    if (fileExists(candidate)) return candidate;
+  }
+
+  if (normalized.startsWith("uploads/")) {
+    const candidate = path.resolve(process.cwd(), normalized);
+    if (fileExists(candidate)) return candidate;
+  }
+
+  const base = path.basename(normalized);
+  const uploadsCandidate = path.resolve(
+    process.cwd(),
+    "uploads",
+    "diploma-signatures",
+    base
+  );
+  if (fileExists(uploadsCandidate)) return uploadsCandidate;
+
+  return null;
+}
+
+function drawSignatureImage(
+  doc: PDFKit.PDFDocument,
+  imagePath: string | null,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+) {
+  if (!imagePath) return;
+
+  try {
+    doc.image(imagePath, x, y, {
+      fit: [width, height],
+      valign: "bottom",
+    });
+  } catch {
+  }
+}
+
 export const diplomaPdfService = {
   async generateDiplomaPdf(
     participantId: number,
@@ -72,11 +127,14 @@ export const diplomaPdfService = {
     const participantName = diploma.participant.name;
     const certificateNumber = diploma.certificateNumber;
 
-    const sessions = (diploma.event as any).sessions ?? [];
-    const sessionTitles: string[] = sessions.map((s: any) => s.title);
+    const sessions = ((diploma.event as any).sessions ?? []) as Array<any>;
+    const sessionTitles: string[] = sessions
+      .map((s) => String(s.title ?? "").trim())
+      .filter(Boolean);
 
-    const attendanceSources: AttendanceSource[] = (diploma.participant as any)
-      .attendances?.map((a: any) => a.source) ?? [AttendanceSource.ONSITE];
+    const attendanceSources: AttendanceSource[] =
+      ((diploma.participant as any).attendances?.map((a: any) => a.source) ??
+        [AttendanceSource.ONSITE]) as AttendanceSource[];
 
     const mode = inferMode(attendanceSources);
 
@@ -89,7 +147,6 @@ export const diplomaPdfService = {
     const ws = winterSemesterLabel(endRefDate);
     const location = (diploma.event as any).diplomaLocation ?? "Darmstadt";
 
-    // A4 portrait
     const doc = new PDFDocument({
       size: "A4",
       margin: 0,
@@ -97,176 +154,214 @@ export const diplomaPdfService = {
 
     const chunks: Buffer[] = [];
     doc.on("data", (c) => chunks.push(c));
+
     const done = new Promise<Buffer>((resolve) => {
       doc.on("end", () => resolve(Buffer.concat(chunks)));
     });
 
-    // Layout constants (tuned to match provided Diplome.pdf)
     const pageW = 595.28;
-    const left = 78;
-    const top = 56;
+    const left = 71;
     const red = "#e30613";
-
-    // --- Header (TU logo + text) ---
-    const tudLogoPath = safeAssetPath("src/assets/diploma/tud_smp_logo.jpeg");
-    doc.save();
-    doc.rect(left - 60, top - 10, 420, 105).clip();
-    try {
-      doc.image(tudLogoPath, left - 70, top - 22, { width: 440 });
-    } catch {
-      // If asset missing, just continue (keeps generation working)
-    }
-    doc.restore();
-
-    // --- DIPLOM + SMP ---
-    doc.fillColor(red);
-    doc.font("Times-Roman").fontSize(88);
-    // draw with letter spacing similar to sample
-    drawSpacedText(doc, "D I P L O M",79, 196, 4.2);
-
-    doc.font("Times-Roman").fontSize(18);
-    doc.text("SMP", pageW - left - 140, 270, { width: 190, align: "right" });
-
-    // --- Body text ---
-    doc.fillColor("#000000");
-    doc.font("Helvetica").fontSize(12);
-
-    let y = 290;
-    const lineGap = 6;
     const bodyWidth = pageW - left * 2;
 
-    doc.text("Die Technische Universität Darmstadt", left, y, {
-      width: bodyWidth,
-    });
-    y += 18 + lineGap;
+    const tudLogoPath = safeAssetPath("src/assets/diploma/tud.png");
+    const fallbackWalther = safeAssetPath(
+      "src/assets/diploma/signature_walther.jpeg"
+    );
 
-    doc.font("Helvetica").fontSize(12);
-    doc.text("verleiht durch diese Urkunde", left, y, { width: bodyWidth });
-    y += 24;
+    const signer1Name =
+      (diploma.event as any).diplomaSigner1Name || "Prof. Dr. Tanja Brühl";
+    const signer1Role =
+      (diploma.event as any).diplomaSigner1Role || "Die Präsidentin";
 
-    doc.font("Helvetica-Bold").fontSize(22);
-    doc.text(participantName, left, y, { width: bodyWidth });
-    y += 24;
+    const signer2Name =
+      (diploma.event as any).diplomaSigner2Name || "Prof. Dr. Thomas Walther";
+    const signer2Role =
+      (diploma.event as any).diplomaSigner2Role || "Fachbereich Physik";
 
-    
-    doc.font("Helvetica").fontSize(12);
+    const signer1StoredPath = resolveStoredUploadPath(
+      (diploma.event as any).diplomaSigner1SignatureUrl
+    );
+    const signer2StoredPath = resolveStoredUploadPath(
+      (diploma.event as any).diplomaSigner2SignatureUrl
+    );
 
-const participationLine =
-  mode === "ONSITE"
-    ? "für die erfolgreiche Teilnahme an dem sechswöchigen Kursus"
-    : mode === "ONLINE"
-      ? "für die erfolgreiche Teilnahme an dem sechswöchigen Kursus per Zoom"
-      : "für die erfolgreiche hybride Teilnahme an dem sechswöchigen Kursus";
+    const signer1SigPath =
+      signer1StoredPath ||
+      (fileExists(fallbackWalther) ? fallbackWalther : null);
 
-doc.text(participationLine, left, y, { width: bodyWidth });
-y += 18;
+    const signer2SigPath =
+      signer2StoredPath ||
+      (fileExists(fallbackWalther) ? fallbackWalther : null);
 
-// 2) line: winter semester + purpose (Modern Physics)
-doc.font("Helvetica").fontSize(12);
-doc.text(`im Wintersemester ${ws} zum Verständnis der Modernen Physik`, left, y, {
-  width: bodyWidth,
-});
-y += 18;
+    //white background
+    doc.rect(0, 0, pageW, 841.89).fill("#ffffff");
+    doc.fillColor("#000000");
 
-// 3) line: topics intro
-doc.font("Helvetica").fontSize(12);
-doc.text("mit den Themen:", left, y, { width: bodyWidth });
-y += 18;
-
-    doc.font("Helvetica").fontSize(12.5);
-    const bulletIndent = 12;
-    for (const t of sessionTitles) {
-      doc.text(`- ${t}`, left + bulletIndent, y, {
-        width: bodyWidth - bulletIndent,
+    //Header logo
+    try {
+      doc.image(tudLogoPath, 20, 16, {
+        width: 245,
       });
-      y = doc.y + 2;
-      // Keep space for signatures
-      if (y > 610) break;
+    } catch {
     }
 
-    // --- Date line ---
+    //DIPLOM / SMP
+    doc.fillColor(red);
+    doc.font("Times-Roman").fontSize(88);
+    drawSpacedText(doc, "D I P L O M", left, 132, 3.4);
+
+    doc.font("Times-Roman").fontSize(18);
+    doc.text("SMP", 500, 197, {
+      width: 60,
+      align: "left",
+      lineBreak: false,
+    });
+
+    //Intro block
+    doc.fillColor("#000000");
+    doc.font("Helvetica").fontSize(12);
+    doc.text("Die Technische Universität Darmstadt", left, 228, {
+      width: bodyWidth,
+      align: "left",
+    });
+    doc.text("verleiht durch diese Urkunde", left, 245, {
+      width: bodyWidth,
+      align: "left",
+    });
+
+    //Participant name
+    doc.font("Helvetica-Bold").fontSize(21);
+    doc.text(participantName, left, 293, {
+      width: bodyWidth,
+      align: "left",
+    });
+
+    //Main diploma text block
+    let y = 346;
+
+    doc.font("Helvetica").fontSize(12);
+    doc.text("das", left, y, { width: bodyWidth, lineBreak: false });
+    y += 14;
+
+    // SATURDAY MORNING PHYSICS Diplom
+    const smpBaseX = left;
+
+    doc.font("Helvetica-Bold").fontSize(14);
+    doc.text("S", smpBaseX, y, { lineBreak: false });
+
+    doc.font("Helvetica").fontSize(14);
+    doc.text("ATURDAY ", smpBaseX + 10, y, { lineBreak: false });
+
+    doc.font("Helvetica-Bold").fontSize(14);
+    doc.text("M", smpBaseX + 76, y, { lineBreak: false });
+
+    doc.font("Helvetica").fontSize(14);
+    doc.text("ORNING ", smpBaseX + 88, y, { lineBreak: false });
+
+    doc.font("Helvetica-Bold").fontSize(14);
+    doc.text("P", smpBaseX + 149, y, { lineBreak: false });
+
+    doc.font("Helvetica").fontSize(14);
+    doc.text("HYSICS Diplom", smpBaseX + 159, y, { lineBreak: false });
+
+    y += 34;
+
+    doc.font("Helvetica").fontSize(12);
+
+    const participationLine =
+      mode === "ONSITE"
+        ? "für die erfolgreiche Teilnahme an dem sechswöchigen Kursus"
+        : mode === "ONLINE"
+          ? "für die erfolgreiche Teilnahme an dem sechswöchigen Kursus per Zoom"
+          : "für die erfolgreiche hybride Teilnahme an dem sechswöchigen Kursus";
+
+    doc.text(participationLine, left, y, {
+      width: bodyWidth,
+      align: "left",
+    });
+    y += 16;
+
+    doc.text(
+      `im Wintersemester ${ws} zum Verständnis der Modernen Physik`,
+      left,
+      y,
+      {
+        width: bodyWidth,
+        align: "left",
+      }
+    );
+    y += 16;
+
+    doc.text("mit den Themen:", left, y, {
+      width: bodyWidth,
+      align: "left",
+    });
+    y += 30;
+
+    //Session titles
+    doc.font("Helvetica").fontSize(12);
+    for (const title of sessionTitles) {
+      const beforeY = y;
+      doc.text(title, left, y, {
+        width: bodyWidth,
+        align: "left",
+        lineGap: 2,
+      });
+      y = doc.y + 6;
+
+      if (y > 620) {
+        y = beforeY;
+        break;
+      }
+    }
+
+    //Date line
     const dateStr =
       mode === "ONSITE"
         ? `${location}, ${formatDateFull(endRefDate)}`
         : `${location}, im ${formatMonthYear(endRefDate)}`;
 
-    doc.font("Helvetica").fontSize(12.5);
-    doc.text(dateStr, left, 664, { width: bodyWidth });
+    const dateY = Math.max(y + 20, 660);
+    doc.font("Helvetica").fontSize(12);
+    doc.text(dateStr, left, dateY, {
+      width: bodyWidth,
+      align: "left",
+    });
 
-    // --- Signatures ---
-    const sigY = 705;
-    const sigLineY = sigY + 18;
+    //Signature images
+    const sigImgTopY = 724;
+    drawSignatureImage(doc, signer1SigPath, left, sigImgTopY, 145, 44);
+    drawSignatureImage(doc, signer2SigPath, left + 250, sigImgTopY, 155, 44);
+      
+    //Signature names / roles
+    const labelY = 770;
+    doc.font("Helvetica").fontSize(10);
 
-    const colGap = 70;
-    const colW = (bodyWidth - colGap) / 2;
-    const col1X = left;
-    const col2X = left + colW + colGap;
+    doc.text(signer1Name, left, labelY, {
+      width: 180,
+      align: "left",
+    });
+    doc.text(signer2Name, left + 250, labelY, {
+      width: 180,
+      align: "left",
+    });
 
-    const signer1Name = (diploma.event as any).diplomaSigner1Name;
-    const signer1Role = (diploma.event as any).diplomaSigner1Role;
-    const signer1Sig = (diploma.event as any).diplomaSigner1SignatureUrl;
-
-    const signer2Name = (diploma.event as any).diplomaSigner2Name;
-    const signer2Role = (diploma.event as any).diplomaSigner2Role;
-    const signer2Sig = (diploma.event as any).diplomaSigner2SignatureUrl;
-
-    const fallbackWalther = safeAssetPath(
-      "src/assets/diploma/signature_walther.jpeg"
-    );
-
-    const signer1SigResolved =
-      signer1Sig ?? (signer2Sig ? signer2Sig : fallbackWalther);
-    const signer2SigResolved = signer2Sig ?? fallbackWalther;
-
-    // signature images (above line)
-    const sigImgY = sigY - 6;
-    try {
-      doc.image(signer1SigResolved, col1X + 12, sigImgY - 28, { width: 170 });
-    } catch {
-      // ignore
-    }
-    try {
-      doc.image(signer2SigResolved, col2X + 12, sigImgY - 28, { width: 170 });
-    } catch {
-      // ignore
-    }
-
-    // signature lines
-    doc
-      .moveTo(col1X, sigLineY)
-      .lineTo(col1X + colW, sigLineY)
-      .stroke("#000000");
-    doc
-      .moveTo(col2X, sigLineY)
-      .lineTo(col2X + colW, sigLineY)
-      .stroke("#000000");
-
-    doc.font("Helvetica").fontSize(11);
-    doc.text(
-      [signer1Name, signer1Role].filter(Boolean).join(", ") ||
-        "Mitglied des Präsidiums der TU Darmstadt",
-      col1X,
-      sigLineY + 6,
-      { width: colW }
-    );
-    doc.text(
-      [signer2Name, signer2Role].filter(Boolean).join(", ") ||
-        "Verantwortliche:r des Fachbereichs",
-      col2X,
-      sigLineY + 6,
-      { width: colW }
-    );
-
-    // small certificate number (optional)
-    doc.font("Helvetica").fontSize(9).fillColor("#444444");
-    doc.text(`Nr. ${certificateNumber}`, left, 815, { width: bodyWidth });
+    doc.text(signer1Role, left, labelY + 14, {
+      width: 180,
+      align: "left",
+    });
+    doc.text(signer2Role, left + 250, labelY + 14, {
+      width: 180,
+      align: "left",
+    });
 
     doc.end();
     const pdf = await done;
 
     return {
       pdf,
-      fileName: `diploma-${certificateNumber}.pdf`,
+      fileName: `SMP-Diplom.pdf`,
     };
   },
 };
