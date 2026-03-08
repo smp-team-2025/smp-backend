@@ -1,4 +1,5 @@
 import { prisma } from "../../prisma";
+import { diplomaService } from "../diplomas/diplomas.service";
 
 export const quizzesService = {
   async getAllQuestions() {
@@ -171,13 +172,35 @@ export const quizzesService = {
       throw new Error("ALREADY_SUBMITTED");
     }
 
-    return await prisma.fermiResponse.create({
+    const response = await prisma.fermiResponse.create({
       data: {
         participantId,
         quizId,
-        answers: answers,
+        answers,
       },
     });
+    
+    const quiz = await prisma.fermiQuiz.findUnique({
+      where: { id: quizId },
+      select: {
+        session: {
+          select: {
+            eventId: true,
+          },
+        },
+      },
+    });
+    
+    if (!quiz) {
+      throw new Error("QUIZ_NOT_FOUND");
+    }
+    
+    await diplomaService.autoIssueDiplomaIfEligible(
+      participantId,
+      quiz.session.eventId
+    );
+    
+    return response;
   },
 
   async getResults(quizId: number) {

@@ -1,6 +1,7 @@
 import { PrismaClient, UserRole } from "@prisma/client";
 import { isSimilar } from "../../services/nameMatch";
 import type { ZoomCsvRow } from "../../services/zoomCsv";
+import { diplomaService } from "../diplomas/diplomas.service";
 
 const prisma = new PrismaClient();
 
@@ -52,14 +53,23 @@ class AttendanceService {
       throw new Error("ALREADY_SCANNED");
     }
 
-    return prisma.attendance.create({
+    const attendance = await prisma.attendance.create({
       data: {
         participantId: participant.id,
         sessionId,
         scannedByHiwiId: hiwi.id,
+        source: "ONSITE",
       },
-    });
-  }
+});
+
+await diplomaService.autoIssueDiplomaIfEligible(
+  participant.id,
+  session.eventId
+);
+
+return attendance;
+}
+  
 
   //Manual Attendance taking by Organizers
   async manual({
@@ -99,13 +109,21 @@ class AttendanceService {
       throw new Error("ALREADY_PRESENT");
     }
 
-    return prisma.attendance.create({
+    const attendance = await prisma.attendance.create({
       data: {
         participantId,
         sessionId,
         scannedByHiwiId: null, // Organizers take manual attendance
+        source: "ONSITE",
       },
     });
+
+    await diplomaService.autoIssueDiplomaIfEligible(
+      participantId,
+      session.eventId
+    );
+
+    return attendance;
   }
 
   //Removing attendance by Organizers
@@ -189,6 +207,15 @@ class AttendanceService {
     sessionId: number;
     rows: ZoomCsvRow[];
   }) {
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+      select: { id: true, eventId: true },
+    });
+
+    if (!session) {
+      throw new Error("SESSION_NOT_FOUND");
+    }
+
     const unmatched: ZoomCsvRow[] = [];
     let matchedCount = 0;
 
@@ -200,21 +227,30 @@ class AttendanceService {
         continue;
       }
 
-      await prisma.attendance.upsert({
-        where: {
-          participantId_sessionId: {
-            participantId: user.id,
-            sessionId,
-          },
-        },
-        create: {
+    await prisma.attendance.upsert({
+      where: {
+        participantId_sessionId: {
           participantId: user.id,
           sessionId,
-       },
-        update: {},
-     });
-
-     matchedCount++;
+        },
+      },
+      create: {
+        participantId: user.id,
+        sessionId,
+        source: "ONLINE",
+        zoomDisplayName: row.name ?? null,
+        zoomEmail: row.email ?? null,
+      },
+      update: {
+        source: "ONLINE",
+        zoomDisplayName: row.name ?? null,
+        zoomEmail: row.email ?? null,
+      },
+    });
+    
+    await diplomaService.autoIssueDiplomaIfEligible(user.id, session.eventId);
+    
+    matchedCount++;
     }
 
     if (unmatched.length > 0) {

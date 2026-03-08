@@ -1,7 +1,7 @@
 import { prisma } from "../../prisma";
 import { UserRole } from "@prisma/client";
 
-const MINIMUM_ATTENDANCE_COUNT = 3;
+const MINIMUM_ATTENDANCE_COUNT = 6;
 
 type EligibilityResult = {
   isEligible: boolean;
@@ -103,29 +103,29 @@ export const diplomaService = {
     };
   },
 
-  async issueDiploma(participantId: number, eventId: number) {
-    const eligibility = await this.checkEligibility(participantId, eventId);
-
-    if (!eligibility.isEligible) {
-      throw new Error("PARTICIPANT_NOT_ELIGIBLE");
-    }
-
-    const existing = await prisma.diploma.findUnique({
-      where: {
-        participantId_eventId: {
-          participantId,
-          eventId,
-        },
+async issueDiploma(participantId: number, eventId: number) {
+  const existing = await prisma.diploma.findUnique({
+    where: {
+      participantId_eventId: {
+        participantId,
+        eventId,
       },
-    });
+    },
+  });
 
-    if (existing) {
-      throw new Error("DIPLOMA_ALREADY_ISSUED");
-    }
+  if (existing) {
+    throw new Error("DIPLOMA_ALREADY_ISSUED");
+  }
 
-    const certificateNumber = await generateCertificateNumber(eventId);
+  const eligibility = await this.checkEligibility(participantId, eventId);
 
-    const diploma = await prisma.diploma.create({
+  if (!eligibility.isEligible) {
+    throw new Error("PARTICIPANT_NOT_ELIGIBLE");
+  }
+
+  const certificateNumber = await generateCertificateNumber(eventId);
+
+  const diploma = await prisma.diploma.create({
       data: {
         participantId,
         eventId,
@@ -173,6 +173,124 @@ export const diplomaService = {
 
     return diploma;
   },
+
+  async autoIssueDiplomaIfEligible(participantId: number, eventId: number) {
+  const existing = await prisma.diploma.findUnique({
+    where: {
+      participantId_eventId: {
+        participantId,
+        eventId,
+      },
+    },
+  });
+
+  if (existing) {
+    return existing;
+  }
+
+  const eligibility = await this.checkEligibility(participantId, eventId);
+
+  if (!eligibility.isEligible) {
+    return null;
+  }
+
+  const certificateNumber = await generateCertificateNumber(eventId);
+
+  try {
+    return await prisma.diploma.create({
+      data: {
+        participantId,
+        eventId,
+        certificateNumber,
+      },
+      include: {
+        participant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            registration: {
+              select: { school: true },
+            },
+            attendances: {
+              where: { session: { eventId } },
+              select: { source: true, sessionId: true },
+            },
+          },
+        },
+        event: {
+          select: {
+            id: true,
+            title: true,
+            startDate: true,
+            endDate: true,
+            diplomaSigner1Name: true,
+            diplomaSigner1Role: true,
+            diplomaSigner1SignatureUrl: true,
+            diplomaSigner2Name: true,
+            diplomaSigner2Role: true,
+            diplomaSigner2SignatureUrl: true,
+            diplomaLocation: true,
+            sessions: {
+              orderBy: { startsAt: "asc" },
+              select: { id: true, title: true, startsAt: true },
+            },
+          },
+        },
+      },
+    });
+  } catch (error: any) {
+    const alreadyCreated = await prisma.diploma.findUnique({
+      where: {
+        participantId_eventId: {
+          participantId,
+          eventId,
+        },
+      },
+      include: {
+        participant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            registration: {
+              select: { school: true },
+            },
+            attendances: {
+              where: { session: { eventId } },
+              select: { source: true, sessionId: true },
+            },
+          },
+        },
+        event: {
+          select: {
+            id: true,
+            title: true,
+            startDate: true,
+            endDate: true,
+            diplomaSigner1Name: true,
+            diplomaSigner1Role: true,
+            diplomaSigner1SignatureUrl: true,
+            diplomaSigner2Name: true,
+            diplomaSigner2Role: true,
+            diplomaSigner2SignatureUrl: true,
+            diplomaLocation: true,
+            sessions: {
+              orderBy: { startsAt: "asc" },
+              select: { id: true, title: true, startsAt: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (alreadyCreated) {
+      return alreadyCreated;
+    }
+
+    throw error;
+  }
+},
 
   async getDiploma(participantId: number, eventId: number) {
     return prisma.diploma.findUnique({
