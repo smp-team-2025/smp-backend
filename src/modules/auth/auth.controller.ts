@@ -18,9 +18,7 @@ export const authController = {
       });
     } catch (err: any) {
       if (err.message === "INVALID_CREDENTIALS") {
-        return res
-          .status(401)
-          .json({ error: "Invalid email or password" });
+        return res.status(401).json({ error: "Invalid email or password" });
       }
 
       console.error("Error in login:", err);
@@ -30,27 +28,22 @@ export const authController = {
 
   async forgotPassword(req: Request, res: Response) {
     const { email } = req.body ?? {};
+
     if (!email || typeof email !== "string") {
       return res.status(400).json({ error: "EMAIL_REQUIRED" });
     }
 
-    await authService.forgotPassword(email);
+    try {
+      await authService.forgotPassword(email);
 
-    return res.json({ status: "ok" });
-  },
-
-  async resetPassword(req: Request, res: Response) {
-    const { token, newPassword } = req.body ?? {};
-    if (!token || typeof token !== "string") {
-      return res.status(400).json({ error: "TOKEN_REQUIRED" });
+      return res.json({
+        status: "ok",
+        message:
+          "Die E-Mail wurde erfolgreich gesendet. Falls Sie keine E-Mail erhalten, prüfen Sie bitte Ihren Spam-Ordner oder stellen Sie sicher, dass Sie Ihre E-Mail-Adresse korrekt eingegeben haben.",
+      });
+    } catch (err) {
+      console.error("Error in forgotPassword:", err);
+      return res.status(500).json({ error: "FORGOT_PASSWORD_FAILED" });
     }
-    if (!newPassword || typeof newPassword !== "string" || newPassword.length < 8) {
-      return res.status(400).json({ error: "WEAK_PASSWORD" });
-    }
-
-    const ok = await authService.resetPassword(token, newPassword);
-    if (!ok) return res.status(400).json({ error: "INVALID_OR_EXPIRED_TOKEN" });
-
-    return res.json({ status: "ok" });
   },
 };
