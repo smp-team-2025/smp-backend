@@ -1,19 +1,35 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const FROM = process.env.EMAIL_FROM || "SMP <onboarding@resend.dev>";
+const FROM = process.env.EMAIL_FROM || "SMP <satmorphy@physik.tu-darmstadt.de>";
 
-let resend: Resend | null = null;
+function getTransporter() {
+  const host = process.env.SMTP_HOST;
+  const port = Number(process.env.SMTP_PORT || 587);
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
 
-function getResend() {
-  if (!process.env.RESEND_API_KEY) {
+  if (!host || !user || !pass) {
     return null;
   }
 
-  if (!resend) {
-    resend = new Resend(process.env.RESEND_API_KEY);
-  }
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure: false, // port 587 => STARTTLS
+    auth: {
+      user,
+      pass,
+    },
+  });
+}
 
-  return resend;
+function escapeHtml(input: string) {
+  return input
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 export async function sendApprovalEmail(
@@ -25,46 +41,42 @@ export async function sendApprovalEmail(
     introText?: string | null;
   }
 ) {
-  const client = getResend();
+  const transporter = getTransporter();
 
-  if (!client) {
-    console.log("[DEV EMAIL] Would send approval email to:", to);
+  if (!transporter) {
+    console.log("[DEV EMAIL] SMTP not configured. Would send approval email to:", to);
     console.log("Password:", password);
     return;
   }
-
-  const escapeHtml = (input: string) =>
-    input
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/\\"/g, "&quot;")
-      .replace(/'/g, "&#039;");
 
   const intro = (opts?.introText ?? "").trim();
   const introHtml = intro
     ? `<div style="margin-bottom:16px">${escapeHtml(intro).replace(/\n/g, "<br/>")}</div>`
     : "";
 
-  const subject = (opts?.subject ?? "").trim() || "Your SMP registration has been approved";
+  const subject =
+    (opts?.subject ?? "").trim() || "Your SMP registration has been approved";
 
   try {
-    await client.emails.send({
+    await transporter.sendMail({
       from: FROM,
       to,
       subject,
       html: `
         ${introHtml}
-        <p>Hello ${name},</p>
+        <p>Hello ${escapeHtml(name)},</p>
         <p>Your registration for SMP has been approved.</p>
         <p><strong>Your login credentials:</strong></p>
         <ul>
-          <li>Email: ${to}</li>
-          <li>Password: <strong>${password}</strong></li>
+          <li>Email: ${escapeHtml(to)}</li>
+          <li>Password: <strong>${escapeHtml(password)}</strong></li>
         </ul>
       `,
     });
+
+    console.log("[APPROVAL EMAIL SENT] Sent to:", to);
   } catch (err) {
     console.error("[APPROVAL EMAIL ERROR]", err);
+    throw err;
   }
 }
