@@ -2,6 +2,8 @@ import { prisma } from "../../prisma";
 import { UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { generateRandomPassword } from "../../utils/password";
+import { sendHiwiWelcomeEmail } from "./hiwi.mail.service";
 
 type CreateHiwiInput = {
   email: string;
@@ -37,45 +39,59 @@ export const hiwiService = {
     });
   },
 
-  async create(input: CreateHiwiInput) {
-    //Email Check
-    const existing = await prisma.user.findUnique({ where: { email: input.email } });
-    if (existing) {
-      throw new Error("EMAIL_ALREADY_EXISTS");
-    }
+async create(input: CreateHiwiInput) {
+  const normalizedEmail = input.email.trim().toLowerCase();
 
-    const plainPassword = generatePassword(10);
-    const passwordHash = await bcrypt.hash(plainPassword, 10);
+  const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+  if (existing) {
+    throw new Error("EMAIL_ALREADY_EXISTS");
+  }
 
-    const createdUser = await prisma.user.create({
-      data: {
-        email: input.email,
-        name: input.name,
-        passwordHash,
-        role: UserRole.HIWI,
-        hiwi: {
-          create: {
-            clothingSize: input.clothingSize ?? null,
-          },
+  const plainPassword = generateRandomPassword(10);
+  const passwordHash = await bcrypt.hash(plainPassword, 10);
+
+  const createdUser = await prisma.user.create({
+    data: {
+      email: normalizedEmail,
+      name: input.name,
+      passwordHash,
+      role: UserRole.HIWI,
+      hiwi: {
+        create: {
+          clothingSize: input.clothingSize ?? null,
         },
       },
-      include: {
-        hiwi: true,
-      },
-    });
+    },
+    include: {
+      hiwi: true,
+    },
+  });
 
-    // TODO: Change this as email
-    console.log("======================================");
-    console.log("[HIWI CREATED]");
-    console.log("email:", createdUser.email);
-    console.log("password:", plainPassword);
-    console.log("======================================");
+  try {
+    await sendHiwiWelcomeEmail(
+      createdUser.email,
+      createdUser.name,
+      plainPassword
+    );
+  } catch (err) {
+    await prisma.$transaction([
+      prisma.hiWi.delete({ where: { id: createdUser.hiwi!.id } }),
+      prisma.user.delete({ where: { id: createdUser.id } }),
+    ]);
 
-    return {
-      user: { id: createdUser.id, email: createdUser.email, name: createdUser.name, role: createdUser.role },
-      hiwi: createdUser.hiwi,
-    };
-  },
+    throw err;
+  }
+
+  return {
+    user: {
+      id: createdUser.id,
+      email: createdUser.email,
+      name: createdUser.name,
+      role: createdUser.role,
+    },
+    hiwi: createdUser.hiwi,
+  };
+},
 
   async update(hiwiId: number, input: UpdateHiwiInput) {
     const hiwi = await prisma.hiWi.findUnique({ where: { id: hiwiId }, include: { user: true } });

@@ -1,5 +1,10 @@
 import { Request, Response } from "express";
 import { hiwiService } from "./hiwi.service";
+import crypto from "crypto";
+
+export function generateRandomPassword(length = 12) {
+  return crypto.randomBytes(32).toString("base64url").slice(0, length);
+}
 
 export const hiwiController = {
   async list(_req: Request, res: Response) {
@@ -17,15 +22,33 @@ export const hiwiController = {
     res.json(hiwi);
   },
 
-  async create(req: Request, res: Response) {
+async create(req: Request, res: Response) {
+  try {
     const { email, name, clothingSize } = req.body ?? {};
-    if (!email || typeof email !== "string") return res.status(400).json({ error: "EMAIL_REQUIRED" });
-    if (!name || typeof name !== "string") return res.status(400).json({ error: "NAME_REQUIRED" });
-    if (clothingSize != null && typeof clothingSize !== "string") return res.status(400).json({ error: "INVALID_CLOTHING_SIZE" });
+
+    if (!email || typeof email !== "string") {
+      return res.status(400).json({ error: "EMAIL_REQUIRED" });
+    }
+
+    if (!name || typeof name !== "string") {
+      return res.status(400).json({ error: "NAME_REQUIRED" });
+    }
+
+    if (clothingSize != null && typeof clothingSize !== "string") {
+      return res.status(400).json({ error: "INVALID_CLOTHING_SIZE" });
+    }
 
     const result = await hiwiService.create({ email, name, clothingSize });
-    res.status(201).json(result);
-  },
+    return res.status(201).json(result);
+  } catch (err: any) {
+    if (err.message === "EMAIL_ALREADY_EXISTS") {
+      return res.status(409).json({ error: "EMAIL_ALREADY_EXISTS" });
+    }
+
+    console.error("Error creating hiwi:", err);
+    return res.status(500).json({ error: "FAILED_TO_CREATE_HIWI" });
+  }
+},
 
   async update(req: Request, res: Response) {
     const id = Number(req.params.id);
