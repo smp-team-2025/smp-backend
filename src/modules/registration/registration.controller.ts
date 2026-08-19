@@ -92,6 +92,10 @@ export const registrationController = {
       if (err.message === "NO_ACTIVE_EVENT") {
         return res.status(409).json({ error: "NO_ACTIVE_EVENT" });
       }
+      // Duplicate e-mail: either detected upfront or by the unique constraint (race condition)
+      if (err.message === "EMAIL_ALREADY_REGISTERED" || err.code === "P2002") {
+        return res.status(409).json({ error: "EMAIL_ALREADY_REGISTERED" });
+      }
 
       console.error("Error in create registration:", err);
       return res.status(500).json({ error: "Internal server error" });

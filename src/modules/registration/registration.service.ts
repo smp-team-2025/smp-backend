@@ -49,6 +49,11 @@ export const registrationService = {
   async createRegistration(input: RegistrationInput) {
     if (input.email !== input.confirmEmail) throw new Error("EMAIL_MISMATCH");
 
+    const existing = await prisma.registration.findUnique({
+      where: { email: input.email },
+    });
+    if (existing) throw new Error("EMAIL_ALREADY_REGISTERED");
+
     const activeEventId = await eventsService.getActiveEventId();
 
     return prisma.registration.create({
