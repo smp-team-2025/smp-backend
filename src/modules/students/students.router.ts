@@ -18,3 +18,17 @@ studentsRouter.get(
   requireRole(UserRole.ORGANIZER),
   studentsController.exportCsv
 );
+
+studentsRouter.patch(
+  "/:registrationId",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER),
+  studentsController.update
+);
+
+studentsRouter.delete(
+  "/:registrationId",
+  requireAuth,
+  requireRole(UserRole.ORGANIZER),
+  studentsController.remove
+);

@@ -23,7 +23,7 @@ export type RegistrationInput = {
 };
 
 // Helper function to capitalize name (e.g., "can erdebil" -> "Can Erdebil")
-function capitalizeName(name: string): string {
+export function capitalizeName(name: string): string {
   return name
     .trim()
     .split(/\s+/)
@@ -32,7 +32,7 @@ function capitalizeName(name: string): string {
 }
 
 // Helper function to determine participant type from registration data
-function determineParticipantType(school: string, grade: string): ParticipantType {
+export function determineParticipantType(school: string, grade: string): ParticipantType {
   // If school is "Keine" (Nicht an einer Schule) -> GUEST
   if (school === "Keine") {
     return ParticipantType.GUEST;
